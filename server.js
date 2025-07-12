@@ -3,9 +3,11 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-const CLIENT_ID = '1956428f-689a-401c-b7d0-c75e81f64530';
-const CLIENT_SECRET = 'jEjjsGzxJqkTiYth87d12WrARFASpSzsyPgrQd4Y';
+// 🔐 Use environment variables (Render.com will inject these)
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
+// 🔁 Get OAuth2 access token from Prokerala
 async function getAccessToken() {
   const res = await fetch('https://api.prokerala.com/token', {
     method: 'POST',
@@ -20,6 +22,7 @@ async function getAccessToken() {
   return data.access_token;
 }
 
+// 🌞 Get full kundli (birth chart)
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
 
@@ -44,10 +47,41 @@ app.post('/api/kundli', async (req, res) => {
     res.json(chart);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Something went wrong' });
+    res.status(500).json({ error: 'Failed to fetch kundli chart' });
   }
 });
 
-app.listen(3000, () => {
-  console.log('✅ Server running at http://localhost:3000');
+// 🔮 Get Dasha periods (life phases)
+app.post('/api/dasha', async (req, res) => {
+  const { dob, time, latitude, longitude, timezone } = req.body;
+
+  try {
+    const token = await getAccessToken();
+
+    const response = await fetch('https://api.prokerala.com/v2/astrology/dasha', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        datetime: `${dob}T${time}`,
+        coordinates: { latitude, longitude },
+        timezone,
+        ayanamsa: 1,
+      }),
+    });
+
+    const dasha = await response.json();
+    res.json(dasha);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch dasha periods' });
+  }
+});
+
+// 🚀 Start the backend server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
