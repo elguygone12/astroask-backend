@@ -3,11 +3,9 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-// 🔐 Use environment variables (Render.com will inject these)
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
-// 🔁 Get OAuth2 access token from Prokerala
 async function getAccessToken() {
   const res = await fetch('https://api.prokerala.com/token', {
     method: 'POST',
@@ -22,7 +20,6 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// 🌞 Get full kundli (birth chart)
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
 
@@ -51,7 +48,6 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// 🔮 Get Dasha periods (life phases)
 app.post('/api/dasha', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
 
@@ -80,7 +76,34 @@ app.post('/api/dasha', async (req, res) => {
   }
 });
 
-// 🚀 Start the backend server
+app.post('/api/yearly', async (req, res) => {
+  const { dob, time, latitude, longitude, timezone, language } = req.body;
+
+  try {
+    const token = await getAccessToken();
+
+    const response = await fetch('https://api.prokerala.com/v2/astrology/predictions/yearly', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        datetime: `${dob}T${time}`,
+        coordinates: { latitude, longitude },
+        timezone,
+        language: language || 'en',
+      }),
+    });
+
+    const forecast = await response.json();
+    res.json(forecast);
+  } catch (err) {
+    console.error('Yearly forecast error:', err);
+    res.status(500).json({ error: 'Failed to fetch yearly forecast' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
