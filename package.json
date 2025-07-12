@@ -9,7 +9,6 @@
     "web": "expo start --web"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@expo/metro-runtime": "~5.0.4",
     "@react-navigation/native": "^7.1.14",
     "@react-navigation/native-stack": "^7.3.21",
@@ -30,13 +29,5 @@
     "@babel/core": "^7.20.0"
   },
   "private": true
-=======
-    "express": "^4.18.2",
-    "node-fetch": "^2.6.7"
-  },
-  "engines": {
-    "node": "16.x"
-  },
-  "license": "MIT"
->>>>>>> 76942a108aa786b2e465d076baa277c521e2a15f
 }
+
