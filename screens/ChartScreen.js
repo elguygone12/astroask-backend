@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Button } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import COLORS from '../constants/colors';
 
-const ChartScreen = ({ route, navigation }) => {
+const ChartScreen = ({ route }) => {
   const { dob, time, location, language } = route.params;
   const [chartData, setChartData] = useState(null);
 
   useEffect(() => {
     const fetchChart = async () => {
+      console.log('📤 Sending fetch to backend...');
+      console.log('📡 Sending chart request...');
       try {
         const response = await fetch('https://astroask-backend.onrender.com/api/kundli', {
           method: 'POST',
@@ -18,85 +20,41 @@ const ChartScreen = ({ route, navigation }) => {
             latitude: location.latitude,
             longitude: location.longitude,
             timezone: location.timezone,
-            language: language || 'en',
           }),
         });
 
-        const json = await response.json();
+        const text = await response.text();
+        console.log('📥 RAW response:', text);
+
+        const json = JSON.parse(text);
         setChartData(json.data);
       } catch (error) {
-        console.error('Error fetching kundli:', error);
+        console.error('❌ Error fetching chart:', error);
       }
     };
 
     fetchChart();
   }, []);
 
+  // 🔁 Show loading screen while waiting
   if (!chartData) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading Kundli Chart...</Text>
+        <Text style={styles.loadingText}>Loading Chart...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.heading}>Kundli Chart</Text>
-
-      {chartData.planets.map((planet, index) => (
+      <Text style={styles.heading}>Your Astrology Chart</Text>
+      {Object.entries(chartData).map(([key, value], index) => (
         <View key={index} style={styles.card}>
-          <Text style={styles.cardTitle}>{planet.name}</Text>
-          <Text style={styles.cardText}>Sign: {planet.sign.name}</Text>
-          <Text style={styles.cardText}>Degree: {planet.degree.toFixed(2)}</Text>
-          <Text style={styles.cardText}>House: {planet.house}</Text>
+          <Text style={styles.cardTitle}>{key}</Text>
+          <Text style={styles.cardText}>{String(value)}</Text>
         </View>
       ))}
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Key Birth Details</Text>
-
-        <Text style={styles.detailText}>
-          Ascendant (Lagna): {chartData.ascendant.sign.name}
-        </Text>
-
-        <Text style={styles.detailText}>
-          Moon Sign: {chartData.moon.sign.name}
-        </Text>
-
-        <Text style={styles.detailText}>
-          Nakshatra: {chartData.moon.nakshatra.name}
-        </Text>
-      </View>
-
-      <View style={styles.buttonGroup}>
-        <Button
-          title="View Dasha Periods"
-          color={COLORS.primary}
-          onPress={() =>
-            navigation.navigate('Dasha', {
-              dob,
-              time,
-              location,
-              language,
-            })
-          }
-        />
-        <View style={{ height: 12 }} />
-        <Button
-          title="View Yearly Forecast"
-          color={COLORS.primary}
-          onPress={() =>
-            navigation.navigate('YearlyForecast', {
-              dob,
-              time,
-              location,
-              language,
-            })
-          }
-        />
-      </View>
     </ScrollView>
   );
 };
@@ -108,51 +66,32 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   heading: {
-    color: COLORS.primary,
     fontSize: 22,
     fontWeight: 'bold',
+    color: COLORS.primary,
     marginBottom: 16,
     textAlign: 'center',
   },
   card: {
     backgroundColor: COLORS.card,
-    padding: 12,
-    marginBottom: 10,
+    padding: 14,
     borderRadius: 10,
+    marginBottom: 12,
   },
   cardTitle: {
-    color: COLORS.primary,
     fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
     marginBottom: 6,
   },
   cardText: {
-    color: COLORS.text,
-    fontSize: 16,
-  },
-  section: {
-    marginTop: 20,
-    backgroundColor: COLORS.card,
-    padding: 14,
-    borderRadius: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  detailText: {
     fontSize: 16,
     color: COLORS.text,
-    marginBottom: 4,
   },
   loadingText: {
-    color: COLORS.text,
     marginTop: 10,
     textAlign: 'center',
-  },
-  buttonGroup: {
-    marginTop: 24,
+    color: COLORS.text,
   },
 });
 

@@ -10,6 +10,7 @@ const YearlyForecastScreen = ({ route }) => {
     const fetchForecast = async () => {
       try {
         const response = await fetch('https://astroask-backend.onrender.com/api/yearly', {
+
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
