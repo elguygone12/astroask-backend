@@ -78,6 +78,7 @@ app.post('/api/dasha', async (req, res) => {
 
 app.post('/api/yearly', async (req, res) => {
   const { dob, time, latitude, longitude, timezone, language } = req.body;
+  console.log('👉 Incoming yearly request body:', req.body);
 
   try {
     const token = await getAccessToken();
