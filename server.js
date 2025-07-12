@@ -7,6 +7,7 @@ const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
 async function getAccessToken() {
+  console.log('🔐 Getting access token...');
   const res = await fetch('https://api.prokerala.com/token', {
     method: 'POST',
     headers: {
@@ -17,6 +18,7 @@ async function getAccessToken() {
   });
 
   const data = await res.json();
+  console.log('🎟️ Prokerala token response:', data);
   return data.access_token;
 }
 
