@@ -11,7 +11,7 @@ const ChartScreen = ({ route }) => {
       console.log('📤 Sending fetch to backend...');
       console.log('📡 Sending chart request...');
       try {
-        const response = await fetch('https://astroask-backend.onrender.com/api/kundli', {
+        const response = await fetch('https://prokerala-backend.onrender.com/api/kundli', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

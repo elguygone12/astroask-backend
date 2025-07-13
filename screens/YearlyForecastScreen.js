@@ -9,8 +9,7 @@ const YearlyForecastScreen = ({ route }) => {
   useEffect(() => {
     const fetchForecast = async () => {
       try {
-        const response = await fetch('https://astroask-backend.onrender.com/api/yearly', {
-
+        const response = await fetch('https://prokerala-backend.onrender.com/api/yearly', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
