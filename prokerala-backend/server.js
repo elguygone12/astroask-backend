@@ -3,11 +3,11 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-// Environment variables
+// 🔐 Environment variables for credentials
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
-// Function to get Prokerala API token
+// 🔄 Get access token
 async function getAccessToken() {
   console.log('🔐 Getting access token...');
   const res = await fetch('https://api.prokerala.com/token', {
@@ -24,7 +24,7 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// ✅ Kundli Route
+// 🪐 Kundli Chart Route (GET)
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   console.log('📩 Kundli request body:', req.body);
@@ -32,7 +32,10 @@ app.post('/api/kundli', async (req, res) => {
   try {
     const token = await getAccessToken();
 
-    const url = `https://api.prokerala.com/v2/astrology/kundli?datetime=${dob}T${time}&latitude=${latitude}&longitude=${longitude}&timezone=${timezone}&ayanamsa=1`;
+    const isoDatetime = `${dob}T${time}:00${timezone}`; // Example: 2005-01-20T14:30:00+05:30
+    const coordinates = `${latitude},${longitude}`;     // Example: "28.61,77.23"
+
+    const url = `https://api.prokerala.com/v2/astrology/kundli?datetime=${encodeURIComponent(isoDatetime)}&coordinates=${coordinates}&ayanamsa=1`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -50,7 +53,7 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// ✅ Dasha Route
+// 🔁 Dasha Period Route (GET)
 app.post('/api/dasha', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   console.log('📩 Dasha request body:', req.body);
@@ -58,18 +61,16 @@ app.post('/api/dasha', async (req, res) => {
   try {
     const token = await getAccessToken();
 
-    const response = await fetch('https://api.prokerala.com/v2/astrology/dasha', {
-      method: 'POST',
+    const isoDatetime = `${dob}T${time}:00${timezone}`;
+    const coordinates = `${latitude},${longitude}`;
+
+    const url = `https://api.prokerala.com/v2/astrology/dasha?datetime=${encodeURIComponent(isoDatetime)}&coordinates=${coordinates}&ayanamsa=1`;
+
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        datetime: `${dob}T${time}`,
-        coordinates: { latitude, longitude },
-        timezone,
-        ayanamsa: 1,
-      }),
     });
 
     const dasha = await response.json();
@@ -81,7 +82,7 @@ app.post('/api/dasha', async (req, res) => {
   }
 });
 
-// ✅ Yearly Forecast Route
+// 📅 Yearly Forecast Route (POST)
 app.post('/api/yearly', async (req, res) => {
   const { dob, time, latitude, longitude, timezone, language } = req.body;
   console.log('📩 Yearly forecast request body:', req.body);
@@ -89,15 +90,20 @@ app.post('/api/yearly', async (req, res) => {
   try {
     const token = await getAccessToken();
 
-    const response = await fetch('https://api.prokerala.com/v2/astrology/predictions/yearly', {
+    const isoDatetime = `${dob}T${time}:00${timezone}`;
+    const coordinates = `${latitude},${longitude}`;
+
+    const url = 'https://api.prokerala.com/v2/astrology/predictions/yearly';
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        datetime: `${dob}T${time}`,
-        coordinates: { latitude, longitude },
+        datetime: isoDatetime,
+        coordinates,
         timezone,
         language: language || 'en',
       }),
@@ -107,13 +113,13 @@ app.post('/api/yearly', async (req, res) => {
     console.log('📤 Yearly forecast response:', forecast);
     res.json(forecast);
   } catch (err) {
-    console.error('❌ Error fetching yearly forecast:', err);
+    console.error('❌ Yearly forecast error:', err);
     res.status(500).json({ error: 'Failed to fetch yearly forecast' });
   }
 });
 
-// ✅ Start the server
-const PORT = process.env.PORT || 3000;
+// ✅ Start Server
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
