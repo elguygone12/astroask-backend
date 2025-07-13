@@ -3,9 +3,11 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
+// Environment variables
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
+// Function to get Prokerala API token
 async function getAccessToken() {
   console.log('🔐 Getting access token...');
   const res = await fetch('https://api.prokerala.com/token', {
@@ -22,36 +24,36 @@ async function getAccessToken() {
   return data.access_token;
 }
 
+// ✅ Kundli Route
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
+  console.log('📩 Kundli request body:', req.body);
 
   try {
     const token = await getAccessToken();
 
-    const response = await fetch('https://api.prokerala.com/v2/astrology/kundli', {
-      method: 'POST',
+    const url = `https://api.prokerala.com/v2/astrology/kundli?datetime=${dob}T${time}&latitude=${latitude}&longitude=${longitude}&timezone=${timezone}&ayanamsa=1`;
+
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        datetime: `${dob}T${time}`,
-        coordinates: { latitude, longitude },
-        timezone,
-        ayanamsa: 1,
-      }),
     });
 
     const chart = await response.json();
+    console.log('📤 Kundli response:', chart);
     res.json(chart);
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error fetching kundli chart:', err);
     res.status(500).json({ error: 'Failed to fetch kundli chart' });
   }
 });
 
+// ✅ Dasha Route
 app.post('/api/dasha', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
+  console.log('📩 Dasha request body:', req.body);
 
   try {
     const token = await getAccessToken();
@@ -71,16 +73,18 @@ app.post('/api/dasha', async (req, res) => {
     });
 
     const dasha = await response.json();
+    console.log('📤 Dasha response:', dasha);
     res.json(dasha);
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error fetching dasha:', err);
     res.status(500).json({ error: 'Failed to fetch dasha periods' });
   }
 });
 
+// ✅ Yearly Forecast Route
 app.post('/api/yearly', async (req, res) => {
   const { dob, time, latitude, longitude, timezone, language } = req.body;
-  console.log('👉 Incoming yearly request body:', req.body);
+  console.log('📩 Yearly forecast request body:', req.body);
 
   try {
     const token = await getAccessToken();
@@ -100,13 +104,15 @@ app.post('/api/yearly', async (req, res) => {
     });
 
     const forecast = await response.json();
+    console.log('📤 Yearly forecast response:', forecast);
     res.json(forecast);
   } catch (err) {
-    console.error('Yearly forecast error:', err);
+    console.error('❌ Error fetching yearly forecast:', err);
     res.status(500).json({ error: 'Failed to fetch yearly forecast' });
   }
 });
 
+// ✅ Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
