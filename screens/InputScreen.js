@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import COLORS from '../constants/colors';
 
@@ -15,7 +22,9 @@ const InputScreen = ({ navigation }) => {
     }
 
     try {
-      const res = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(location)}&key=46faf81b36274dcdae05a3031fa8afca`);
+      const res = await fetch(
+        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(location)}&key=46faf81b36274dcdae05a3031fa8afca`
+      );
       const data = await res.json();
 
       if (!data.results || data.results.length === 0) {
@@ -24,7 +33,16 @@ const InputScreen = ({ navigation }) => {
       }
 
       const { lat, lng } = data.results[0].geometry;
-      const timezone = data.results[0].annotations.timezone.offset_sec / 3600;
+      const offsetSeconds = data.results[0].annotations.timezone.offset_sec;
+      const sign = offsetSeconds >= 0 ? '+' : '-';
+      const absOffset = Math.abs(offsetSeconds);
+      const hours = Math.floor(absOffset / 3600)
+        .toString()
+        .padStart(2, '0');
+      const minutes = Math.floor((absOffset % 3600) / 60)
+        .toString()
+        .padStart(2, '0');
+      const timezone = `${sign}${hours}:${minutes}`;
 
       const userData = {
         dob,
@@ -38,7 +56,10 @@ const InputScreen = ({ navigation }) => {
       };
 
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      navigation.navigate('Chart', userData);
+
+      if (navigation && navigation.navigate) {
+        navigation.navigate('Chart', userData);
+      }
     } catch (error) {
       console.error('Error fetching coordinates:', error);
       Alert.alert('Error', 'Failed to fetch coordinates. Please try again.');
@@ -99,3 +120,4 @@ const styles = StyleSheet.create({
 });
 
 export default InputScreen;
+
