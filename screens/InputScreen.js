@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Switch,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
@@ -15,7 +16,7 @@ import COLORS from '../constants/colors';
 const InputScreen = ({ navigation }) => {
   const [dob, setDob] = useState('');
   const [time, setTime] = useState('');
-  const [isAM, setIsAM] = useState(true); // For toggle
+  const [isAM, setIsAM] = useState(true); // Display-only toggle
   const [location, setLocation] = useState('');
   const [language, setLanguage] = useState('en');
 
@@ -40,7 +41,9 @@ const InputScreen = ({ navigation }) => {
     }
 
     try {
-      const res = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(location)}&key=46faf81b36274dcdae05a3031fa8afca`);
+      const res = await fetch(
+        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(location)}&key=46faf81b36274dcdae05a3031fa8afca`
+      );
       const data = await res.json();
 
       if (!data.results || data.results.length === 0) {
@@ -72,57 +75,59 @@ const InputScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🔮 Enter Birth Details</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <Text style={styles.title}>🔮 Enter Birth Details</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Date of Birth (YYYY-MM-DD)"
-        placeholderTextColor="#999"
-        value={dob}
-        onChangeText={setDob}
-      />
-
-      <View style={styles.row}>
         <TextInput
-          style={[styles.input, { flex: 1, marginRight: 8 }]}
-          placeholder="Time of Birth (HH:MM)"
+          style={styles.input}
+          placeholder="Date of Birth (YYYY-MM-DD)"
           placeholderTextColor="#999"
-          value={time}
-          onChangeText={setTime}
+          value={dob}
+          onChangeText={setDob}
         />
-        <TouchableOpacity
-          style={[styles.toggle, isAM ? styles.toggleActive : styles.toggleInactive]}
-          onPress={() => setIsAM(!isAM)}
-        >
-          <Text style={styles.toggleText}>{isAM ? 'AM' : 'PM'}</Text>
+
+        <View style={styles.row}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginRight: 8 }]}
+            placeholder="Time of Birth (HH:MM)"
+            placeholderTextColor="#999"
+            value={time}
+            onChangeText={setTime}
+          />
+          <TouchableOpacity
+            style={[styles.toggle, isAM ? styles.toggleActive : styles.toggleInactive]}
+            onPress={() => setIsAM(!isAM)}
+          >
+            <Text style={styles.toggleText}>{isAM ? 'AM' : 'PM'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Place of Birth (e.g. Delhi)"
+          placeholderTextColor="#999"
+          value={location}
+          onChangeText={setLocation}
+        />
+
+        <View style={styles.pickerContainer}>
+          <Text style={styles.pickerLabel}>Language:</Text>
+          <Picker
+            selectedValue={language}
+            onValueChange={(val) => setLanguage(val)}
+            style={styles.picker}
+          >
+            <Picker.Item label="English" value="en" />
+            <Picker.Item label="Hindi" value="hi" />
+          </Picker>
+        </View>
+
+        <TouchableOpacity onPress={handleSubmit} style={styles.button}>
+          <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
       </View>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Place of Birth (e.g. Delhi)"
-        placeholderTextColor="#999"
-        value={location}
-        onChangeText={setLocation}
-      />
-
-      <View style={styles.pickerContainer}>
-        <Text style={styles.pickerLabel}>Language:</Text>
-        <Picker
-          selectedValue={language}
-          onValueChange={(val) => setLanguage(val)}
-          style={styles.picker}
-        >
-          <Picker.Item label="English" value="en" />
-          <Picker.Item label="Hindi" value="hi" />
-        </Picker>
-      </View>
-
-      <TouchableOpacity onPress={handleSubmit} style={styles.button}>
-        <Text style={styles.buttonText}>Continue</Text>
-      </TouchableOpacity>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -199,5 +204,6 @@ const styles = StyleSheet.create({
 });
 
 export default InputScreen;
+
 
 
