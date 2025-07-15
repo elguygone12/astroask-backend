@@ -24,7 +24,7 @@ const DashaScreen = ({ route }) => {
         const json = await response.json();
         setDashaData(json.data);
       } catch (error) {
-        console.error('Dasha fetch error:', error);
+        console.error('❌ Dasha fetch error:', error);
       }
     };
 
@@ -45,7 +45,7 @@ const DashaScreen = ({ route }) => {
       <Text style={styles.heading}>Dasha Periods</Text>
       {dashaData.map((dasha, index) => (
         <View key={index} style={styles.card}>
-          <Text style={styles.cardTitle}>{dasha.planet.name}</Text>
+          <Text style={styles.cardTitle}>{dasha.planet?.name || 'Unknown Planet'}</Text>
           <Text style={styles.cardText}>From: {dasha.start}</Text>
           <Text style={styles.cardText}>To: {dasha.end}</Text>
         </View>
@@ -90,3 +90,4 @@ const styles = StyleSheet.create({
 });
 
 export default DashaScreen;
+

@@ -14,7 +14,7 @@ import COLORS from '../constants/colors';
 const InputScreen = ({ navigation }) => {
   const [dob, setDob] = useState('');
   const [time, setTime] = useState('');
-  const [isAM, setIsAM] = useState(true); // AM/PM toggle just for show
+  const [isAM, setIsAM] = useState(true); // Display toggle only
   const [location, setLocation] = useState('');
   const [language, setLanguage] = useState('en');
 
@@ -130,7 +130,7 @@ const InputScreen = ({ navigation }) => {
         <Text style={styles.buttonText}>View Dasha</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => handleSubmit('Yearly')}>
+      <TouchableOpacity style={styles.button} onPress={() => handleSubmit('YearlyForecast')}>
         <Text style={styles.buttonText}>View Yearly Forecast</Text>
       </TouchableOpacity>
     </View>

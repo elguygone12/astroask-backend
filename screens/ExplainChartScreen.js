@@ -1,72 +1,57 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import COLORS from '../constants/colors';
 
-const ExplainChartScreen = ({ route }) => {
-  const { chartData, language = 'en' } = route.params || {};
+const ExplainDashaScreen = ({ route }) => {
+  const { dob, time, location, language } = route.params;
   const [explanation, setExplanation] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getExplanation = async () => {
-      if (!chartData) {
-        Alert.alert('Error', 'Chart data is missing.');
-        return;
-      }
-
+    const fetchExplanation = async () => {
       try {
-        const response = await fetch(
-          'https://prokerala-backend.onrender.com/api/explain/chart',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: chartData, language }),
-          }
-        );
+        const response = await fetch('https://prokerala-backend.onrender.com/api/explain-dasha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dob,
+            time,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            timezone: location.timezone,
+            language,
+          }),
+        });
 
-        const json = await response.json();
-
-        if (json.explanation) {
-          setExplanation(json.explanation);
-        } else if (json.error) {
-          Alert.alert('Error', json.error);
-        } else {
-          Alert.alert('Error', 'Unexpected response from server.');
-        }
+        const data = await response.json();
+        setExplanation(data.explanation);
       } catch (error) {
-        console.error('❌ Error getting chart explanation:', error);
-        Alert.alert('Error', 'Failed to get explanation. Please try again.');
+        console.error('Error fetching explanation:', error);
+        setExplanation('❌ Failed to load explanation. Try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    getExplanation();
-  }, [chartData]);
+    fetchExplanation();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Getting AI explanation of Dasha...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.heading}>Chart Explanation</Text>
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Generating explanation...</Text>
-        </View>
-      ) : (
-        <Text style={styles.explanation}>{explanation}</Text>
-      )}
+      <Text style={styles.heading}>Dasha Explanation by AI</Text>
+      <Text style={styles.text}>{explanation}</Text>
     </ScrollView>
   );
 };
-
-export default ExplainChartScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -81,20 +66,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  explanation: {
+  text: {
     fontSize: 16,
     color: COLORS.text,
-    lineHeight: 22,
-  },
-  loadingContainer: {
-    marginTop: 20,
-    alignItems: 'center',
+    lineHeight: 24,
   },
   loadingText: {
-    marginTop: 10,
     color: COLORS.text,
+    marginTop: 12,
+    textAlign: 'center',
   },
 });
+
+export default ExplainDashaScreen;
+
 
 
 
