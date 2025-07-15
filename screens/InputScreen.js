@@ -14,7 +14,7 @@ import COLORS from '../constants/colors';
 const InputScreen = ({ navigation }) => {
   const [dob, setDob] = useState('');
   const [time, setTime] = useState('');
-  const [isAM, setIsAM] = useState(true); // Just for show
+  const [isAM, setIsAM] = useState(true); // AM/PM toggle just for show
   const [location, setLocation] = useState('');
   const [language, setLanguage] = useState('en');
 
@@ -32,7 +32,7 @@ const InputScreen = ({ navigation }) => {
     loadSavedData();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (screenName) => {
     if (!dob || !time || !location) {
       Alert.alert('Missing Info', 'Please fill all fields');
       return;
@@ -67,7 +67,7 @@ const InputScreen = ({ navigation }) => {
       };
 
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      navigation.navigate('Chart', userData);
+      navigation.navigate(screenName, userData);
     } catch (error) {
       console.error('Fetch error:', error);
       Alert.alert('Error', 'Failed to fetch coordinates.');
@@ -122,8 +122,16 @@ const InputScreen = ({ navigation }) => {
         </Picker>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Continue</Text>
+      <TouchableOpacity style={styles.button} onPress={() => handleSubmit('Chart')}>
+        <Text style={styles.buttonText}>View Chart</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => handleSubmit('Dasha')}>
+        <Text style={styles.buttonText}>View Dasha</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => handleSubmit('Yearly')}>
+        <Text style={styles.buttonText}>View Yearly Forecast</Text>
       </TouchableOpacity>
     </View>
   );
@@ -190,6 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#5a189a',
     padding: 16,
     borderRadius: 10,
+    marginTop: 10,
   },
   buttonText: {
     color: '#f0f8ff',
@@ -200,6 +209,7 @@ const styles = StyleSheet.create({
 });
 
 export default InputScreen;
+
 
 
 
