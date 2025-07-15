@@ -9,9 +9,6 @@ const ChartScreen = ({ route }) => {
 
   useEffect(() => {
     const fetchChart = async () => {
-      console.log('📤 Sending fetch to backend...');
-      console.log('📡 Params:', { dob, time, location });
-
       try {
         const response = await fetch('https://prokerala-backend.onrender.com/api/kundli', {
           method: 'POST',
@@ -26,23 +23,15 @@ const ChartScreen = ({ route }) => {
         });
 
         const text = await response.text();
-        console.log('📥 RAW response:', text);
+        const json = JSON.parse(text);
 
-        try {
-          const json = JSON.parse(text);
-          if (json.data) {
-            setChartData(json.data);
-          } else {
-            setErrorMsg('Unexpected response format from server.');
-            console.error('⚠️ Unexpected format:', json);
-          }
-        } catch (parseError) {
-          setErrorMsg('Failed to parse chart data.');
-          console.error('❌ JSON parse error:', parseError);
+        if (json.data) {
+          setChartData(json.data);
+        } else {
+          setErrorMsg('Unexpected response format from server.');
         }
       } catch (error) {
-        setErrorMsg('Network error. Please try again later.');
-        console.error('❌ Fetch error:', error);
+        setErrorMsg('Network or parsing error. Please try again later.');
       }
     };
 
@@ -52,7 +41,7 @@ const ChartScreen = ({ route }) => {
   if (errorMsg) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>{errorMsg}</Text>
+        <Text style={styles.errorText}>{errorMsg}</Text>
       </View>
     );
   }
@@ -66,15 +55,30 @@ const ChartScreen = ({ route }) => {
     );
   }
 
+  const { nakshatra_details, mangal_dosha, yoga_details } = chartData;
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.heading}>Your Astrology Chart</Text>
-      {Object.entries(chartData).map(([key, value], index) => (
-        <View key={index} style={styles.card}>
-          <Text style={styles.cardTitle}>{key}</Text>
-          <Text style={styles.cardText}>{String(value)}</Text>
-        </View>
-      ))}
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Nakshatra</Text>
+        <Text style={styles.cardText}>Name: {nakshatra_details?.nakshatra?.name}</Text>
+        <Text style={styles.cardText}>Pada: {nakshatra_details?.nakshatra?.pada}</Text>
+        <Text style={styles.cardText}>Rashi: {nakshatra_details?.chandra_rasi?.name}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Mangal Dosha</Text>
+        <Text style={styles.cardText}>{mangal_dosha?.description}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Yogas</Text>
+        {yoga_details?.map((yoga, index) => (
+          <Text key={index} style={styles.cardText}>- {yoga.name}: {yoga.description}</Text>
+        ))}
+      </View>
     </ScrollView>
   );
 };
@@ -113,7 +117,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.text,
   },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
 
 export default ChartScreen;
+
 
