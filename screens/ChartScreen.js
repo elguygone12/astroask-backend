@@ -5,11 +5,13 @@ import COLORS from '../constants/colors';
 const ChartScreen = ({ route }) => {
   const { dob, time, location, language } = route.params;
   const [chartData, setChartData] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     const fetchChart = async () => {
       console.log('📤 Sending fetch to backend...');
-      console.log('📡 Sending chart request...');
+      console.log('📡 Params:', { dob, time, location });
+
       try {
         const response = await fetch('https://prokerala-backend.onrender.com/api/kundli', {
           method: 'POST',
@@ -26,17 +28,35 @@ const ChartScreen = ({ route }) => {
         const text = await response.text();
         console.log('📥 RAW response:', text);
 
-        const json = JSON.parse(text);
-        setChartData(json.data);
+        try {
+          const json = JSON.parse(text);
+          if (json.data) {
+            setChartData(json.data);
+          } else {
+            setErrorMsg('Unexpected response format from server.');
+            console.error('⚠️ Unexpected format:', json);
+          }
+        } catch (parseError) {
+          setErrorMsg('Failed to parse chart data.');
+          console.error('❌ JSON parse error:', parseError);
+        }
       } catch (error) {
-        console.error('❌ Error fetching chart:', error);
+        setErrorMsg('Network error. Please try again later.');
+        console.error('❌ Fetch error:', error);
       }
     };
 
     fetchChart();
   }, []);
 
-  // 🔁 Show loading screen while waiting
+  if (errorMsg) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>{errorMsg}</Text>
+      </View>
+    );
+  }
+
   if (!chartData) {
     return (
       <View style={styles.container}>
@@ -96,3 +116,4 @@ const styles = StyleSheet.create({
 });
 
 export default ChartScreen;
+
