@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import COLORS from '../constants/colors';
 
 const DashaScreen = ({ route }) => {
-  const { dob, time, location, language } = route.params;
+  const { dob, time, location, language = 'en' } = route.params;
   const [dashaData, setDashaData] = useState(null);
+  const [explanation, setExplanation] = useState('');
+  const [loadingData, setLoadingData] = useState(true);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   useEffect(() => {
     const fetchDasha = async () => {
@@ -18,38 +28,76 @@ const DashaScreen = ({ route }) => {
             latitude: location.latitude,
             longitude: location.longitude,
             timezone: location.timezone,
-            language: language || 'en',
+            language,
           }),
         });
+
         const json = await response.json();
-        setDashaData(json.data);
+        if (json.data) {
+          setDashaData(json.data);
+          fetchAIExplanation(json.data); // Pass data to ChatGPT
+        } else {
+          Alert.alert('Error', 'Failed to load Dasha periods.');
+        }
       } catch (error) {
         console.error('❌ Dasha fetch error:', error);
+        Alert.alert('Error', 'Failed to fetch Dasha.');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    const fetchAIExplanation = async (data) => {
+      setLoadingAI(true);
+      try {
+        const res = await fetch('https://prokerala-backend.onrender.com/api/explain/dasha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data, language }),
+        });
+
+        const json = await res.json();
+        setExplanation(json.explanation || 'No explanation received.');
+      } catch (err) {
+        console.error('❌ Dasha AI error:', err);
+        setExplanation('Failed to load Dasha explanation.');
+      } finally {
+        setLoadingAI(false);
       }
     };
 
     fetchDasha();
   }, []);
 
-  if (!dashaData) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading Dasha Periods...</Text>
-      </View>
-    );
-  }
-
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.heading}>Dasha Periods</Text>
-      {dashaData.map((dasha, index) => (
-        <View key={index} style={styles.card}>
-          <Text style={styles.cardTitle}>{dasha.planet?.name || 'Unknown Planet'}</Text>
-          <Text style={styles.cardText}>From: {dasha.start}</Text>
-          <Text style={styles.cardText}>To: {dasha.end}</Text>
+
+      {loadingData ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading Dasha periods...</Text>
         </View>
-      ))}
+      ) : (
+        <>
+          {dashaData?.map((dasha, index) => (
+            <View key={index} style={styles.card}>
+              <Text style={styles.cardTitle}>{dasha.planet?.name || 'Unknown Planet'}</Text>
+              <Text style={styles.cardText}>From: {dasha.start}</Text>
+              <Text style={styles.cardText}>To: {dasha.end}</Text>
+            </View>
+          ))}
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>🧠 AI Explanation</Text>
+            {loadingAI ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <Text style={styles.cardText}>{explanation}</Text>
+            )}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 };
@@ -69,12 +117,13 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.card,
-    padding: 12,
-    marginBottom: 12,
+    padding: 14,
     borderRadius: 10,
+    marginBottom: 12,
   },
   cardTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
     color: COLORS.primary,
     marginBottom: 6,
   },
@@ -82,12 +131,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text,
   },
+  center: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
   loadingText: {
     marginTop: 10,
     color: COLORS.text,
-    textAlign: 'center',
   },
 });
 
 export default DashaScreen;
+
+
+
+
 

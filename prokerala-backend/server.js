@@ -5,12 +5,12 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-// 🔐 ENV variables
+// 🔐 ENV Variables
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// 🔄 Get Prokerala access token
+// 🔄 Get Prokerala Access Token
 async function getAccessToken() {
   const res = await fetch('https://api.prokerala.com/token', {
     method: 'POST',
@@ -24,18 +24,20 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// 📊 Kundli chart
+// 📊 Kundli Chart
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
-
   try {
     const token = await getAccessToken();
     const datetime = `${dob}T${time}:00${timezone}`;
     const coordinates = `${latitude},${longitude}`;
 
-    const response = await fetch(`https://api.prokerala.com/v2/astrology/kundli?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await fetch(
+      `https://api.prokerala.com/v2/astrology/kundli?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     const data = await response.json();
     res.json(data);
@@ -45,18 +47,20 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// 🪐 Dasha periods
+// 🪐 Dasha Periods
 app.post('/api/dasha', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
-
   try {
     const token = await getAccessToken();
     const datetime = `${dob}T${time}:00${timezone}`;
     const coordinates = `${latitude},${longitude}`;
 
-    const response = await fetch(`https://api.prokerala.com/v2/astrology/vimshottari-dasha?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await fetch(
+      `https://api.prokerala.com/v2/astrology/vimshottari-dasha?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     const data = await response.json();
     res.json(data);
@@ -66,38 +70,7 @@ app.post('/api/dasha', async (req, res) => {
   }
 });
 
-// 📆 Yearly Forecast
-app.post('/api/yearly', async (req, res) => {
-  const { dob, time, latitude, longitude, timezone, language } = req.body;
-
-  try {
-    const token = await getAccessToken();
-    const datetime = `${dob}T${time}:00${timezone}`;
-    const coordinates = `${latitude},${longitude}`;
-
-    const response = await fetch('https://api.prokerala.com/v2/astrology/predictions/yearly', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        datetime,
-        coordinates,
-        timezone,
-        language: language || 'en',
-      }),
-    });
-
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    console.error('❌ Yearly forecast error:', err);
-    res.status(500).json({ error: 'Failed to fetch forecast' });
-  }
-});
-
-// 🤖 Explain Chart via ChatGPT
+// 🧠 ChatGPT: Explain Kundli Chart
 app.post('/api/explain/chart', async (req, res) => {
   const { data, language } = req.body;
 
@@ -113,7 +86,7 @@ app.post('/api/explain/chart', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert astrologer. Explain this Vedic chart data clearly in ${language === 'hi' ? 'Hindi' : 'English'}.`,
+            content: `You are an expert Vedic astrologer. Explain the following kundli chart data clearly in ${language === 'hi' ? 'Hindi' : 'English'}.`,
           },
           {
             role: 'user',
@@ -132,7 +105,7 @@ app.post('/api/explain/chart', async (req, res) => {
   }
 });
 
-// 🤖 Explain Dasha via ChatGPT
+// 🧠 ChatGPT: Explain Dasha Periods
 app.post('/api/explain/dasha', async (req, res) => {
   const { data, language } = req.body;
 
@@ -148,7 +121,7 @@ app.post('/api/explain/dasha', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert astrologer. Explain these Dasha periods in ${language === 'hi' ? 'Hindi' : 'English'}.`,
+            content: `You are an expert Vedic astrologer. Explain the following Vimshottari Dasha periods in ${language === 'hi' ? 'Hindi' : 'English'}.`,
           },
           {
             role: 'user',
@@ -167,7 +140,7 @@ app.post('/api/explain/dasha', async (req, res) => {
   }
 });
 
-// 🤖 Explain Yearly via ChatGPT
+// 🧠 ChatGPT: AI-Only Yearly Forecast
 app.post('/api/explain/yearly', async (req, res) => {
   const { data, language } = req.body;
 
@@ -183,7 +156,7 @@ app.post('/api/explain/yearly', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `You are a Vedic astrologer. Based on the following monthly astrology forecast, give an overall summary for the year in ${language === 'hi' ? 'Hindi' : 'English'}.`,
+            content: `You are an astrologer. Based on the user's birth details (DOB, time, location), generate a personalized yearly forecast in ${language === 'hi' ? 'Hindi' : 'English'}.`,
           },
           {
             role: 'user',
@@ -198,11 +171,11 @@ app.post('/api/explain/yearly', async (req, res) => {
     res.json({ explanation });
   } catch (error) {
     console.error('❌ Yearly AI error:', error);
-    res.status(500).json({ error: 'Failed to get yearly explanation' });
+    res.status(500).json({ error: 'Failed to get yearly forecast' });
   }
 });
 
-// ✅ Start the server
+// ✅ Start Server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

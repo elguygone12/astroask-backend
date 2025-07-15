@@ -7,9 +7,7 @@ import LicenseScreen from './screens/LicenseScreen';
 import InputScreen from './screens/InputScreen';
 import ChartScreen from './screens/ChartScreen';
 import DashaScreen from './screens/DashaScreen';
-import ExplainChartScreen from './screens/ExplainChartScreen'; // ✅ Add this
-import ExplainDashaScreen from './screens/ExplainDashaScreen'; // ✅ Add this
-import ExplainYearlyScreen from './screens/ExplainYearlyScreen';
+import ExplainYearlyScreen from './screens/ExplainYearlyScreen'; // ✅ AI Yearly Forecast
 
 const Stack = createNativeStackNavigator();
 
@@ -40,17 +38,7 @@ export default function App() {
         <Stack.Screen
           name="YearlyForecast"
           component={ExplainYearlyScreen}
-          options={{ title: 'Yearly Forecast (AI)' }}
-        />
-        <Stack.Screen
-          name="ExplainChart"
-          component={ExplainChartScreen}
-          options={{ title: 'Chart Explanation (AI)' }}
-        />
-        <Stack.Screen
-          name="ExplainDasha"
-          component={ExplainDashaScreen}
-          options={{ title: 'Dasha Explanation (AI)' }}
+          options={{ title: 'AI Yearly Forecast' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

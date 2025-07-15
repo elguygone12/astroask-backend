@@ -21,7 +21,7 @@ const ExplainYearlyScreen = ({ route }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchYearlyExplanation = async () => {
+    const fetchAIExplanation = async () => {
       if (!dob || !time) {
         Alert.alert(
           language === 'hi' ? 'जानकारी अधूरी है' : 'Missing Info',
@@ -34,44 +34,19 @@ const ExplainYearlyScreen = ({ route }) => {
       }
 
       try {
-        // Step 1: Get raw yearly forecast data
-        const yearlyRes = await fetch('https://prokerala-backend.onrender.com/api/yearly', {
+        const res = await fetch('https://prokerala-backend.onrender.com/api/explain/yearly', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            datetime: `${dob}T${time}`,
-            coordinates: `${location.latitude},${location.longitude}`,
-            timezone: location.timezone,
+            data: { dob, time, location },
             language,
           }),
         });
 
-        const yearlyJson = await yearlyRes.json();
-        const forecastData = yearlyJson.data;
-
-        if (!forecastData) {
-          throw new Error('No forecast data returned');
-        }
-
-        // Step 2: Ask GPT to explain it
-        const gptRes = await fetch('https://prokerala-backend.onrender.com/api/explain/yearly', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: forecastData,
-            language,
-          }),
-        });
-
-        const gptJson = await gptRes.json();
-
-        if (gptJson.explanation) {
-          setExplanation(gptJson.explanation);
-        } else {
-          throw new Error('No explanation received');
-        }
+        const json = await res.json();
+        setExplanation(json.explanation || 'No explanation received.');
       } catch (error) {
-        console.error('❌ Yearly GPT error:', error);
+        console.error('❌ Yearly AI error:', error);
         setExplanation(
           language === 'hi'
             ? 'वार्षिक भविष्यवाणी लोड करने में विफल।'
@@ -82,7 +57,7 @@ const ExplainYearlyScreen = ({ route }) => {
       }
     };
 
-    fetchYearlyExplanation();
+    fetchAIExplanation();
   }, []);
 
   if (loading) {
@@ -92,7 +67,7 @@ const ExplainYearlyScreen = ({ route }) => {
         <Text style={styles.loadingText}>
           {language === 'hi'
             ? 'वार्षिक भविष्यवाणी ला रहा है...'
-            : 'Explaining Yearly Forecast...'}
+            : 'Generating Yearly Forecast...'}
         </Text>
       </View>
     );
@@ -101,9 +76,7 @@ const ExplainYearlyScreen = ({ route }) => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.heading}>
-        {language === 'hi'
-          ? 'वार्षिक भविष्यवाणी की व्याख्या'
-          : 'Yearly Forecast Explanation'}
+        {language === 'hi' ? 'AI वार्षिक भविष्यवाणी' : 'AI Yearly Forecast'}
       </Text>
       <Text style={styles.explanation}>{explanation}</Text>
     </ScrollView>
@@ -143,5 +116,8 @@ const styles = StyleSheet.create({
 });
 
 export default ExplainYearlyScreen;
+
+
+
 
 

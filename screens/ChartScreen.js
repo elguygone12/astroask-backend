@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import COLORS from '../constants/colors';
 
 const ChartScreen = ({ route }) => {
-  const { dob, time, location, language } = route.params;
+  const { dob, time, location, language = 'en' } = route.params;
   const [chartData, setChartData] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [explanation, setExplanation] = useState('');
+  const [loadingChart, setLoadingChart] = useState(true);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   useEffect(() => {
     const fetchChart = async () => {
@@ -22,63 +31,86 @@ const ChartScreen = ({ route }) => {
           }),
         });
 
-        const text = await response.text();
-        const json = JSON.parse(text);
+        const json = await response.json();
 
         if (json.data) {
           setChartData(json.data);
+          fetchExplanation(json.data); // call AI after setting chart
         } else {
-          setErrorMsg('Unexpected response format from server.');
+          Alert.alert('Error', 'Failed to load chart data.');
         }
       } catch (error) {
-        setErrorMsg('Network or parsing error. Please try again later.');
+        Alert.alert('Error', 'Network error while loading chart.');
+        console.error(error);
+      } finally {
+        setLoadingChart(false);
+      }
+    };
+
+    const fetchExplanation = async (data) => {
+      setLoadingAI(true);
+      try {
+        const res = await fetch('https://prokerala-backend.onrender.com/api/explain/chart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data, language }),
+        });
+
+        const json = await res.json();
+        setExplanation(json.explanation || 'No explanation received.');
+      } catch (err) {
+        console.error('❌ Chart GPT error:', err);
+        setExplanation('Failed to load explanation.');
+      } finally {
+        setLoadingAI(false);
       }
     };
 
     fetchChart();
   }, []);
 
-  if (errorMsg) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{errorMsg}</Text>
-      </View>
-    );
-  }
-
-  if (!chartData) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading Chart...</Text>
-      </View>
-    );
-  }
-
-  const { nakshatra_details, mangal_dosha, yoga_details } = chartData;
+  const { nakshatra_details, mangal_dosha, yoga_details } = chartData || {};
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.heading}>Your Astrology Chart</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Nakshatra</Text>
-        <Text style={styles.cardText}>Name: {nakshatra_details?.nakshatra?.name}</Text>
-        <Text style={styles.cardText}>Pada: {nakshatra_details?.nakshatra?.pada}</Text>
-        <Text style={styles.cardText}>Rashi: {nakshatra_details?.chandra_rasi?.name}</Text>
-      </View>
+      {loadingChart ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading chart data...</Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Nakshatra</Text>
+            <Text style={styles.cardText}>Name: {nakshatra_details?.nakshatra?.name}</Text>
+            <Text style={styles.cardText}>Pada: {nakshatra_details?.nakshatra?.pada}</Text>
+            <Text style={styles.cardText}>Rashi: {nakshatra_details?.chandra_rasi?.name}</Text>
+          </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Mangal Dosha</Text>
-        <Text style={styles.cardText}>{mangal_dosha?.description}</Text>
-      </View>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Mangal Dosha</Text>
+            <Text style={styles.cardText}>{mangal_dosha?.description}</Text>
+          </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Yogas</Text>
-        {yoga_details?.map((yoga, index) => (
-          <Text key={index} style={styles.cardText}>- {yoga.name}: {yoga.description}</Text>
-        ))}
-      </View>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Yogas</Text>
+            {yoga_details?.map((yoga, index) => (
+              <Text key={index} style={styles.cardText}>- {yoga.name}: {yoga.description}</Text>
+            ))}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>🧠 AI Explanation</Text>
+            {loadingAI ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <Text style={styles.cardText}>{explanation}</Text>
+            )}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 };
@@ -112,18 +144,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text,
   },
-  loadingText: {
-    marginTop: 10,
-    textAlign: 'center',
-    color: COLORS.text,
+  center: {
+    marginTop: 20,
+    alignItems: 'center',
   },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-    textAlign: 'center',
+  loadingText: {
+    color: COLORS.text,
+    marginTop: 10,
   },
 });
 
 export default ChartScreen;
+
+
+
 
 
