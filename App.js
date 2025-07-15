@@ -1,11 +1,15 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Screens
 import LicenseScreen from './screens/LicenseScreen';
 import InputScreen from './screens/InputScreen';
 import ChartScreen from './screens/ChartScreen';
 import DashaScreen from './screens/DashaScreen';
-import YearlyForecastScreen from './screens/YearlyForecastScreen';
+import ExplainChartScreen from './screens/ExplainChartScreen'; // ✅ Add this
+import ExplainDashaScreen from './screens/ExplainDashaScreen'; // ✅ Add this
+import ExplainYearlyScreen from './screens/ExplainYearlyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,8 +39,18 @@ export default function App() {
         />
         <Stack.Screen
           name="YearlyForecast"
-          component={YearlyForecastScreen}
-          options={{ title: 'Yearly Forecast' }}
+          component={ExplainYearlyScreen}
+          options={{ title: 'Yearly Forecast (AI)' }}
+        />
+        <Stack.Screen
+          name="ExplainChart"
+          component={ExplainChartScreen}
+          options={{ title: 'Chart Explanation (AI)' }}
+        />
+        <Stack.Screen
+          name="ExplainDasha"
+          component={ExplainDashaScreen}
+          options={{ title: 'Dasha Explanation (AI)' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
