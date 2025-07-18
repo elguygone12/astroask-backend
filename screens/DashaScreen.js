@@ -33,11 +33,13 @@ const DashaScreen = ({ route }) => {
         });
 
         const json = await response.json();
+        console.log('👉 Dasha API Response:', json);
+
         if (json.data) {
           setDashaData(json.data);
-          fetchAIExplanation(json.data); // Pass data to ChatGPT
+          fetchAIExplanation(json.data); // Trigger ChatGPT
         } else {
-          Alert.alert('Error', 'Failed to load Dasha periods.');
+          Alert.alert('Error', 'No Dasha data received.');
         }
       } catch (error) {
         console.error('❌ Dasha fetch error:', error);
@@ -57,6 +59,7 @@ const DashaScreen = ({ route }) => {
         });
 
         const json = await res.json();
+        console.log('👉 Dasha ChatGPT Response:', json);
         setExplanation(json.explanation || 'No explanation received.');
       } catch (err) {
         console.error('❌ Dasha AI error:', err);
@@ -78,9 +81,9 @@ const DashaScreen = ({ route }) => {
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Loading Dasha periods...</Text>
         </View>
-      ) : (
+      ) : dashaData && dashaData.length > 0 ? (
         <>
-          {dashaData?.map((dasha, index) => (
+          {dashaData.map((dasha, index) => (
             <View key={index} style={styles.card}>
               <Text style={styles.cardTitle}>{dasha.planet?.name || 'Unknown Planet'}</Text>
               <Text style={styles.cardText}>From: {dasha.start}</Text>
@@ -97,6 +100,8 @@ const DashaScreen = ({ route }) => {
             )}
           </View>
         </>
+      ) : (
+        <Text style={styles.cardText}>No Dasha data available.</Text>
       )}
     </ScrollView>
   );
@@ -142,6 +147,7 @@ const styles = StyleSheet.create({
 });
 
 export default DashaScreen;
+
 
 
 
