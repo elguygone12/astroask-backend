@@ -19,11 +19,12 @@ async function getAccessToken() {
     },
     body: 'grant_type=client_credentials',
   });
+
   const data = await res.json();
   return data.access_token;
 }
 
-// 📊 Kundli Chart
+// 📊 Kundli Chart Endpoint
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   try {
@@ -46,7 +47,7 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// 🪐 FIXED Dasha Periods (Correct endpoint)
+// 🪐 Dasha Periods (with debug logging)
 app.post('/api/dasha', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   try {
@@ -63,7 +64,17 @@ app.post('/api/dasha', async (req, res) => {
       }
     );
 
-    const data = await response.json();
+    const text = await response.text();
+    console.log('📦 Raw Dasha API response:', text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('❌ JSON Parse Error:', parseErr);
+      return res.status(500).json({ error: 'Invalid JSON from Prokerala Dasha API' });
+    }
+
     res.json(data);
   } catch (err) {
     console.error('❌ Dasha error:', err);
