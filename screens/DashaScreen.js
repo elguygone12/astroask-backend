@@ -11,7 +11,7 @@ import COLORS from '../constants/colors';
 
 const DashaScreen = ({ route }) => {
   const { dob, time, location, language = 'en' } = route.params;
-  const [dashaData, setDashaData] = useState(null);
+  const [dashaData, setDashaData] = useState([]);
   const [explanation, setExplanation] = useState('');
   const [loadingData, setLoadingData] = useState(true);
   const [loadingAI, setLoadingAI] = useState(false);
@@ -28,16 +28,15 @@ const DashaScreen = ({ route }) => {
             latitude: location.latitude,
             longitude: location.longitude,
             timezone: location.timezone,
-            language,
           }),
         });
 
         const json = await response.json();
         console.log('👉 Dasha API Response:', json);
 
-        if (json.data) {
-          setDashaData(json.data);
-          fetchAIExplanation(json.data); // Trigger ChatGPT
+        if (json.data?.dasha) {
+          setDashaData(json.data.dasha);
+          fetchAIExplanation(json.data.dasha); // only pass dasha array
         } else {
           Alert.alert('Error', 'No Dasha data received.');
         }
@@ -49,17 +48,16 @@ const DashaScreen = ({ route }) => {
       }
     };
 
-    const fetchAIExplanation = async (data) => {
+    const fetchAIExplanation = async (dashaArray) => {
       setLoadingAI(true);
       try {
         const res = await fetch('https://prokerala-backend.onrender.com/api/explain/dasha', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data, language }),
+          body: JSON.stringify({ data: dashaArray, language }),
         });
 
         const json = await res.json();
-        console.log('👉 Dasha ChatGPT Response:', json);
         setExplanation(json.explanation || 'No explanation received.');
       } catch (err) {
         console.error('❌ Dasha AI error:', err);
@@ -81,7 +79,7 @@ const DashaScreen = ({ route }) => {
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Loading Dasha periods...</Text>
         </View>
-      ) : dashaData && dashaData.length > 0 ? (
+      ) : (
         <>
           {dashaData.map((dasha, index) => (
             <View key={index} style={styles.card}>
@@ -100,8 +98,6 @@ const DashaScreen = ({ route }) => {
             )}
           </View>
         </>
-      ) : (
-        <Text style={styles.cardText}>No Dasha data available.</Text>
       )}
     </ScrollView>
   );
@@ -147,6 +143,7 @@ const styles = StyleSheet.create({
 });
 
 export default DashaScreen;
+
 
 
 
