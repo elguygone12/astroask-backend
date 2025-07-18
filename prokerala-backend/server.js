@@ -20,11 +20,12 @@ async function getAccessToken() {
     },
     body: 'grant_type=client_credentials',
   });
+
   const data = await res.json();
   return data.access_token;
 }
 
-// 📊 Kundli Chart
+// 📊 Kundli Chart Endpoint
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   try {
@@ -34,9 +35,7 @@ app.post('/api/kundli', async (req, res) => {
 
     const response = await fetch(
       `https://api.prokerala.com/v2/astrology/kundli?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     const data = await response.json();
@@ -47,7 +46,7 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// 🪐 Dasha Periods
+// 🪐 Dasha Periods Endpoint
 app.post('/api/dasha', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   try {
@@ -57,9 +56,7 @@ app.post('/api/dasha', async (req, res) => {
 
     const response = await fetch(
       `https://api.prokerala.com/v2/astrology/vimshottari-dasha?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     const data = await response.json();
@@ -70,7 +67,7 @@ app.post('/api/dasha', async (req, res) => {
   }
 });
 
-// 🧠 ChatGPT: Explain Kundli Chart
+// 🧠 ChatGPT: Kundli Chart Explanation
 app.post('/api/explain/chart', async (req, res) => {
   const { data, language } = req.body;
 
@@ -105,7 +102,7 @@ app.post('/api/explain/chart', async (req, res) => {
   }
 });
 
-// 🧠 ChatGPT: Explain Dasha Periods
+// 🧠 ChatGPT: Dasha Explanation
 app.post('/api/explain/dasha', async (req, res) => {
   const { data, language } = req.body;
 
@@ -140,7 +137,7 @@ app.post('/api/explain/dasha', async (req, res) => {
   }
 });
 
-// 🧠 ChatGPT: AI-Only Yearly Forecast
+// 🧠 ChatGPT: Yearly Forecast (AI-only)
 app.post('/api/explain/yearly', async (req, res) => {
   const { data, language } = req.body;
 
@@ -180,3 +177,4 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
