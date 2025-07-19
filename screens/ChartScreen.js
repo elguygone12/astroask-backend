@@ -31,17 +31,20 @@ const ChartScreen = ({ route }) => {
           }),
         });
 
-        const json = await response.json();
+        const text = await response.text(); // fetch as text for debugging
+        console.log('📦 Raw backend response:', text);
+
+        const json = JSON.parse(text); // attempt to parse JSON
 
         if (json.data) {
           setChartData(json.data);
-          fetchExplanation(json.data); // call AI after setting chart
+          fetchExplanation(json.data); // call ChatGPT after data
         } else {
-          Alert.alert('Error', 'Failed to load chart data.');
+          Alert.alert('Error', 'Chart data not available.');
         }
       } catch (error) {
-        Alert.alert('Error', 'Network error while loading chart.');
-        console.error(error);
+        Alert.alert('Error', 'Failed to load chart data.');
+        console.error('❌ Chart fetch error:', error);
       } finally {
         setLoadingChart(false);
       }
@@ -97,7 +100,9 @@ const ChartScreen = ({ route }) => {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Yogas</Text>
             {yoga_details?.map((yoga, index) => (
-              <Text key={index} style={styles.cardText}>- {yoga.name}: {yoga.description}</Text>
+              <Text key={index} style={styles.cardText}>
+                - {yoga.name}: {yoga.description}
+              </Text>
             ))}
           </View>
 
@@ -155,6 +160,8 @@ const styles = StyleSheet.create({
 });
 
 export default ChartScreen;
+
+
 
 
 

@@ -23,9 +23,14 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// 📊 Kundli Chart
+// 📊 Kundli Chart (Safe JSON parsing)
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
+
+  if (!dob || !time || !latitude || !longitude || !timezone) {
+    return res.status(400).json({ error: 'Missing birth details' });
+  }
+
   try {
     const token = await getAccessToken();
     const datetime = `${dob}T${time}:00${timezone}`;
@@ -38,8 +43,15 @@ app.post('/api/kundli', async (req, res) => {
       }
     );
 
-    const data = await response.json();
-    res.json(data);
+    const text = await response.text();
+
+    try {
+      const data = JSON.parse(text);
+      res.json(data);
+    } catch (e) {
+      console.error('❌ Invalid JSON from Prokerala:', text);
+      res.status(500).json({ error: 'Invalid data from Prokerala' });
+    }
   } catch (err) {
     console.error('❌ Kundli error:', err);
     res.status(500).json({ error: 'Failed to fetch chart' });
@@ -68,27 +80,19 @@ app.post('/api/panchang', async (req, res) => {
 // 💍 Marriage Matching
 app.post('/api/marriage-match', async (req, res) => {
   const {
-    boyDob,
-    boyTime,
-    boyLat,
-    boyLng,
-    girlDob,
-    girlTime,
-    girlLat,
-    girlLng,
+    boyDob, boyTime, boyLat, boyLng,
+    girlDob, girlTime, girlLat, girlLng,
     timezone,
   } = req.body;
 
   try {
     const token = await getAccessToken();
-
     const response = await fetch(
       `https://api.prokerala.com/v2/astrology/match-making?boy_dob=${boyDob}T${boyTime}:00${timezone}&boy_coordinates=${boyLat},${boyLng}&girl_dob=${girlDob}T${girlTime}:00${timezone}&girl_coordinates=${girlLat},${girlLng}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-
     const data = await response.json();
     res.json(data);
   } catch (error) {
@@ -103,18 +107,12 @@ app.post('/api/numerology', async (req, res) => {
 
   try {
     const token = await getAccessToken();
-
     const response = await fetch(
-      `https://api.prokerala.com/v2/numerology/name-number?name=${encodeURIComponent(
-        name
-      )}&dob=${dob}`,
+      `https://api.prokerala.com/v2/numerology/name-number?name=${encodeURIComponent(name)}&dob=${dob}`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
-
     const data = await response.json();
     res.json(data);
   } catch (error) {
@@ -241,5 +239,6 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
