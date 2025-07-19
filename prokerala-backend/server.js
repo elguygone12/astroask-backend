@@ -14,17 +14,16 @@ async function getAccessToken() {
   const res = await fetch('https://api.prokerala.com/token', {
     method: 'POST',
     headers: {
-      'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+      Authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
   });
-
   const data = await res.json();
   return data.access_token;
 }
 
-// 📊 Kundli Chart Endpoint
+// 📊 Kundli Chart
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   try {
@@ -47,16 +46,68 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// 🪐 Dasha Periods (with debug logging)
-app.post('/api/dasha', async (req, res) => {
-  const { dob, time, latitude, longitude, timezone } = req.body;
+// 📅 Daily Panchang
+app.post('/api/panchang', async (req, res) => {
+  const { dob, latitude, longitude, timezone } = req.body;
   try {
     const token = await getAccessToken();
-    const datetime = `${dob}T${time}:00${timezone}`;
-    const coordinates = `${latitude},${longitude}`;
+    const response = await fetch(
+      `https://api.prokerala.com/v2/astrology/panchang?datetime=${dob}T00:00:00${timezone}&coordinates=${latitude},${longitude}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Panchang error:', error);
+    res.status(500).json({ error: 'Failed to fetch panchang' });
+  }
+});
+
+// 💍 Marriage Matching
+app.post('/api/marriage-match', async (req, res) => {
+  const {
+    boyDob,
+    boyTime,
+    boyLat,
+    boyLng,
+    girlDob,
+    girlTime,
+    girlLat,
+    girlLng,
+    timezone,
+  } = req.body;
+
+  try {
+    const token = await getAccessToken();
 
     const response = await fetch(
-      `https://api.prokerala.com/v2/astrology/dasha/vimshottari?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`,
+      `https://api.prokerala.com/v2/astrology/match-making?boy_dob=${boyDob}T${boyTime}:00${timezone}&boy_coordinates=${boyLat},${boyLng}&girl_dob=${girlDob}T${girlTime}:00${timezone}&girl_coordinates=${girlLat},${girlLng}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Match error:', error);
+    res.status(500).json({ error: 'Failed to fetch match result' });
+  }
+});
+
+// 🔢 Numerology
+app.post('/api/numerology', async (req, res) => {
+  const { name, dob } = req.body;
+
+  try {
+    const token = await getAccessToken();
+
+    const response = await fetch(
+      `https://api.prokerala.com/v2/numerology/name-number?name=${encodeURIComponent(
+        name
+      )}&dob=${dob}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -64,25 +115,23 @@ app.post('/api/dasha', async (req, res) => {
       }
     );
 
-    const text = await response.text();
-    console.log('📦 Raw Dasha API response:', text);
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseErr) {
-      console.error('❌ JSON Parse Error:', parseErr);
-      return res.status(500).json({ error: 'Invalid JSON from Prokerala Dasha API' });
-    }
-
+    const data = await response.json();
     res.json(data);
-  } catch (err) {
-    console.error('❌ Dasha error:', err);
-    res.status(500).json({ error: 'Failed to fetch dasha' });
+  } catch (error) {
+    console.error('❌ Numerology error:', error);
+    res.status(500).json({ error: 'Failed to fetch numerology data' });
   }
 });
 
-// 🧠 ChatGPT: Explain Kundli Chart
+// 🧠 PDF Report Placeholder
+app.post('/api/pdf-report', async (req, res) => {
+  res.json({
+    reportUrl: 'https://example.com/sample-astro-report.pdf',
+    message: 'This is a placeholder. PDF generation will be added soon.',
+  });
+});
+
+// 🧠 AI: Explain Kundli
 app.post('/api/explain/chart', async (req, res) => {
   const { data, language } = req.body;
 
@@ -117,7 +166,7 @@ app.post('/api/explain/chart', async (req, res) => {
   }
 });
 
-// 🧠 ChatGPT: Explain Dasha Periods
+// 🧠 AI: Explain Dasha
 app.post('/api/explain/dasha', async (req, res) => {
   const { data, language } = req.body;
 
@@ -152,7 +201,7 @@ app.post('/api/explain/dasha', async (req, res) => {
   }
 });
 
-// 🧠 ChatGPT: AI-Only Yearly Forecast
+// 🧠 AI: Yearly Forecast
 app.post('/api/explain/yearly', async (req, res) => {
   const { data, language } = req.body;
 
