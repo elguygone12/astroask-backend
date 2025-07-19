@@ -10,95 +10,75 @@ import {
 import COLORS from '../constants/colors';
 
 const DashaScreen = ({ route }) => {
-  const { dob, time, location, language = 'en' } = route.params;
-  const [dashaData, setDashaData] = useState([]);
+  const {
+    dob = '',
+    time = '',
+    location = { latitude: 28.6139, longitude: 77.2090, timezone: '+05:30' },
+    language = 'en',
+  } = route.params || {};
+
   const [explanation, setExplanation] = useState('');
-  const [loadingData, setLoadingData] = useState(true);
-  const [loadingAI, setLoadingAI] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDasha = async () => {
-      try {
-        const response = await fetch('https://prokerala-backend.onrender.com/api/dasha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            dob,
-            time,
-            latitude: location.latitude,
-            longitude: location.longitude,
-            timezone: location.timezone,
-          }),
-        });
-
-        const json = await response.json();
-        console.log('👉 Dasha API Response:', json);
-
-        if (json.data?.dasha) {
-          setDashaData(json.data.dasha);
-          fetchAIExplanation(json.data.dasha); // only pass dasha array
-        } else {
-          Alert.alert('Error', 'No Dasha data received.');
-        }
-      } catch (error) {
-        console.error('❌ Dasha fetch error:', error);
-        Alert.alert('Error', 'Failed to fetch Dasha.');
-      } finally {
-        setLoadingData(false);
+    const fetchAIExplanation = async () => {
+      if (!dob || !time) {
+        Alert.alert(
+          language === 'hi' ? 'जानकारी अधूरी है' : 'Missing Info',
+          language === 'hi'
+            ? 'कृपया जन्म तिथि और समय दर्ज करें।'
+            : 'Please enter DOB and time.'
+        );
+        setLoading(false);
+        return;
       }
-    };
 
-    const fetchAIExplanation = async (dashaArray) => {
-      setLoadingAI(true);
       try {
         const res = await fetch('https://prokerala-backend.onrender.com/api/explain/dasha', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: dashaArray, language }),
+          body: JSON.stringify({
+            data: { dob, time, location },
+            language,
+          }),
         });
 
         const json = await res.json();
         setExplanation(json.explanation || 'No explanation received.');
-      } catch (err) {
-        console.error('❌ Dasha AI error:', err);
-        setExplanation('Failed to load Dasha explanation.');
+      } catch (error) {
+        console.error('❌ Dasha AI error:', error);
+        setExplanation(
+          language === 'hi'
+            ? 'दशा विवरण प्राप्त करने में विफल।'
+            : 'Failed to load dasha explanation.'
+        );
       } finally {
-        setLoadingAI(false);
+        setLoading(false);
       }
     };
 
-    fetchDasha();
+    fetchAIExplanation();
   }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>
+          {language === 'hi'
+            ? 'दशा विवरण ला रहा है...'
+            : 'Generating Dasha Explanation...'}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.heading}>Dasha Periods</Text>
-
-      {loadingData ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading Dasha periods...</Text>
-        </View>
-      ) : (
-        <>
-          {dashaData.map((dasha, index) => (
-            <View key={index} style={styles.card}>
-              <Text style={styles.cardTitle}>{dasha.planet?.name || 'Unknown Planet'}</Text>
-              <Text style={styles.cardText}>From: {dasha.start}</Text>
-              <Text style={styles.cardText}>To: {dasha.end}</Text>
-            </View>
-          ))}
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🧠 AI Explanation</Text>
-            {loadingAI ? (
-              <ActivityIndicator size="small" color={COLORS.primary} />
-            ) : (
-              <Text style={styles.cardText}>{explanation}</Text>
-            )}
-          </View>
-        </>
-      )}
+      <Text style={styles.heading}>
+        {language === 'hi' ? 'AI दशा विवरण' : 'AI Dasha Period Analysis'}
+      </Text>
+      <Text style={styles.explanation}>{explanation}</Text>
     </ScrollView>
   );
 };
@@ -109,6 +89,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     padding: 16,
   },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -116,33 +102,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  card: {
-    backgroundColor: COLORS.card,
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 6,
-  },
-  cardText: {
+  explanation: {
     fontSize: 16,
+    lineHeight: 24,
     color: COLORS.text,
-  },
-  center: {
-    marginTop: 20,
-    alignItems: 'center',
+    textAlign: 'left',
   },
   loadingText: {
     marginTop: 10,
+    fontSize: 16,
     color: COLORS.text,
   },
 });
 
 export default DashaScreen;
+
 
 
 
