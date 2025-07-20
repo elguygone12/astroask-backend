@@ -1,7 +1,3 @@
-// ✅ Polyfill `fetch` for OpenAI compatibility in Node.js 16
-const fetch = require('node-fetch');
-globalThis.fetch = fetch;
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -11,6 +7,10 @@ const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
+const fetch = require('node-fetch'); // 👈 Polyfill for OpenAI
+
+// 🌍 Fix for OpenAI fetch error
+globalThis.fetch = fetch;
 
 dotenv.config();
 
@@ -66,9 +66,9 @@ app.post('/api/kundli', async (req, res) => {
       {
         params: {
           datetime: `${dob}T${time}`,
-          latitude,
-          longitude,
+          coordinates: `${latitude},${longitude}`,
           timezone,
+          ayanamsa: 1, // 1 = Lahiri Ayanamsa
         },
         headers: {
           Authorization: `Bearer ${token}`,
@@ -131,7 +131,7 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
-// Start server
+// 🚀 Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
