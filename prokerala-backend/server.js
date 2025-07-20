@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { Configuration, OpenAIApi } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
 
@@ -16,31 +15,22 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Setup OpenAI
-const openai = new OpenAIApi(
-  new Configuration({ apiKey: process.env.OPENAI_API_KEY })
-);
-
-// Cache path utility using SHA256
-function getCacheFilePath(type, data) {
-  const hash = crypto.createHash('sha256').update(JSON.stringify({ type, data })).digest('hex');
-  return path.join(__dirname, 'cache', `${type}_${hash}.json`);
-}
-
-// Ensure cache directory exists
+// Cache directory
 const cacheDir = path.join(__dirname, 'cache');
 if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
 
-// 🔮 POST /api/kundli — Get chart from Prokerala
+// 🔐 Generate cache file path
+function getCacheFilePath(type, data) {
+  const hash = crypto.createHash('sha256').update(JSON.stringify({ type, data })).digest('hex');
+  return path.join(cacheDir, `${type}_${hash}.json`);
+}
+
+// 🌐 POST /api/kundli — Fetch kundli data
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
   try {
     const response = await axios.post(process.env.PROKERALA_API_URL, {
-      dob,
-      time,
-      latitude,
-      longitude,
-      timezone,
+      dob, time, latitude, longitude, timezone
     }, {
       headers: {
         Authorization: `Bearer ${process.env.PROKERALA_API_TOKEN}`,
@@ -50,64 +40,62 @@ app.post('/api/kundli', async (req, res) => {
 
     res.json({ data: response.data });
   } catch (err) {
-    console.error('❌ Prokerala fetch error:', err?.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch chart data' });
+    console.error('❌ Prokerala error:', err?.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch kundli chart data' });
   }
 });
 
-// 🧠 POST /api/explain/chart — AI explanation for chart
-app.post('/api/explain/chart', async (req, res) => {
-  await handleAIExplanation(req, res, 'chart');
-});
+// 📍 POST /api/explain/* — Routes
+app.post('/api/explain/chart', async (req, res) => handleAIExplanation(req, res, 'chart'));
+app.post('/api/explain/dasha', async (req, res) => handleAIExplanation(req, res, 'dasha'));
+app.post('/api/explain/yearly', async (req, res) => handleAIExplanation(req, res, 'yearly'));
 
-// 🧠 POST /api/explain/dasha — AI explanation for Dasha
-app.post('/api/explain/dasha', async (req, res) => {
-  await handleAIExplanation(req, res, 'dasha');
-});
-
-// 🧠 POST /api/explain/yearly — AI explanation for yearly forecast
-app.post('/api/explain/yearly', async (req, res) => {
-  await handleAIExplanation(req, res, 'yearly');
-});
-
-// ✨ AI Explanation handler with caching
+// 💡 AI Handler
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
-  const filePath = getCacheFilePath(type, { data, language });
+  const cachePath = getCacheFilePath(type, { data, language });
 
-  // Return from cache if available
-  if (fs.existsSync(filePath)) {
-    const cached = fs.readFileSync(filePath, 'utf-8');
+  if (fs.existsSync(cachePath)) {
+    const cached = fs.readFileSync(cachePath, 'utf-8');
     return res.json(JSON.parse(cached));
   }
 
-  // Prompt engineering
+  // Prompts
   let prompt = '';
   if (type === 'chart') {
-    prompt = `Give an astrology reading explanation in ${language} based on the following kundli chart data:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `You are an expert astrologer. Explain the kundli chart in ${language}:\n\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'dasha') {
-    prompt = `Explain the meaning and predictions for this Vimshottari Dasha period in ${language}:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `You are an expert astrologer. Explain these Vimshottari Dasha periods in ${language}:\n\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'yearly') {
-    prompt = `Give an annual astrology prediction in ${language} based on the following birth details and planetary periods:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `You are an astrologer. Provide a yearly prediction in ${language} based on the birth chart:\n\n${JSON.stringify(data, null, 2)}`;
   }
 
   try {
-    const aiResponse = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
+    const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+      }),
     });
 
-    const explanation = aiResponse.data.choices[0]?.message?.content?.trim() || 'No explanation generated.';
+    const gptJson = await gptRes.json();
+    const explanation = gptJson.choices?.[0]?.message?.content?.trim() || 'No explanation generated.';
     const result = { explanation };
 
-    fs.writeFileSync(filePath, JSON.stringify(result, null, 2), 'utf-8');
+    fs.writeFileSync(cachePath, JSON.stringify(result, null, 2), 'utf-8');
     res.json(result);
   } catch (err) {
     console.error(`❌ ${type} AI error:`, err);
-    res.status(500).json({ error: 'AI explanation failed' });
+    res.status(500).json({ error: 'Failed to generate AI explanation' });
   }
 }
 
+// 🚀 Start
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
