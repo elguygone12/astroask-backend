@@ -1,7 +1,3 @@
-// ✅ Polyfill fetch before anything else
-globalThis.fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
-// Then continue normally
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
