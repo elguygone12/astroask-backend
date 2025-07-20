@@ -1,3 +1,7 @@
+// ✅ Polyfill `fetch` for OpenAI compatibility in Node.js 16
+const fetch = require('node-fetch');
+globalThis.fetch = fetch;
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -131,6 +135,7 @@ async function handleAIExplanation(req, res, type) {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
