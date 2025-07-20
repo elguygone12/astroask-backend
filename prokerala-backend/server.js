@@ -8,11 +8,14 @@ const { OpenAI } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
 
-// ✅ Fix for Node.js 16 - Polyfill fetch + Headers
+// 🌐 Polyfill fetch + Blob for Node 16
 const fetch = require('node-fetch');
+const { Blob } = require('buffer');
 globalThis.fetch = fetch;
 globalThis.Headers = fetch.Headers;
 globalThis.Request = fetch.Request;
+globalThis.Response = fetch.Response;
+globalThis.Blob = Blob;
 
 dotenv.config();
 
@@ -35,7 +38,7 @@ function getCacheFilePath(type, data) {
   return path.join(cacheDir, `${type}_${hash}.json`);
 }
 
-// 🔐 Get Prokerala access token using client credentials
+// 🔐 Get Prokerala access token
 async function getProkeralaAccessToken() {
   try {
     const response = await axios.post(
@@ -45,9 +48,7 @@ async function getProkeralaAccessToken() {
         client_id: process.env.CLIENT_ID,
         client_secret: process.env.CLIENT_SECRET,
       }),
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
     return response.data.access_token;
   } catch (err) {
@@ -58,24 +59,26 @@ async function getProkeralaAccessToken() {
 
 // 📩 /api/kundli — Get birth chart
 app.post('/api/kundli', async (req, res) => {
-  const { dob, time, latitude, longitude } = req.body;
+  const { dob, time, latitude, longitude, timezone } = req.body;
 
   try {
     const token = await getProkeralaAccessToken();
 
-    const response = await axios.get(
-      'https://api.prokerala.com/v2/astrology/birth-details',
-      {
-        params: {
-          datetime: `${dob}T${time}:00+05:30`, // ✅ Proper ISO format
-          coordinates: `${latitude},${longitude}`, // ✅ Coordinates as string
-          ayanamsa: 1, // ✅ Lahiri ayanamsa
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const datetime = `${dob}T${time}:00`; // 👈 Ensure full format
+    const coordinates = `${latitude},${longitude}`;
+    const ayanamsa = 1; // 👈 Mandatory field (can be 1, 3, or 5)
+
+    const response = await axios.get('https://api.prokerala.com/v2/astrology/birth-details', {
+      params: {
+        datetime,
+        coordinates,
+        timezone,
+        ayanamsa,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     res.json({ data: response.data });
   } catch (err) {
@@ -84,7 +87,7 @@ app.post('/api/kundli', async (req, res) => {
   }
 });
 
-// 🔮 AI explain endpoints
+// 🔮 AI Explanation Endpoints
 app.post('/api/explain/chart', async (req, res) => {
   await handleAIExplanation(req, res, 'chart');
 });
@@ -97,7 +100,7 @@ app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
 
-// 💡 AI Explanation logic with caching
+// 💡 Explanation Logic (with cache)
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
   const filePath = getCacheFilePath(type, { data, language });
@@ -132,10 +135,11 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
-// Start server
+// 🚀 Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
