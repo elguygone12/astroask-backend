@@ -1,5 +1,7 @@
-globalThis.fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// ✅ Polyfill fetch before anything else
+globalThis.fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
+// Then continue normally
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -9,10 +11,6 @@ const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
-
-// ✅ Polyfill fetch for OpenAI in Node.js (required for Node 16 or older)
-globalThis.fetch = (...args) =>
-  import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 dotenv.config();
 
