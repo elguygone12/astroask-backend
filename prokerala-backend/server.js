@@ -1,4 +1,4 @@
-// ✅ Polyfills for fetch, Headers, FormData, Blob in Node.js (using undici)
+// ✅ Proper Polyfills for Node.js fetch environment using undici only
 const { fetch, Headers, FormData, Blob } = require('undici');
 globalThis.fetch = fetch;
 globalThis.Headers = Headers;
