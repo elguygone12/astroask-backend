@@ -7,10 +7,12 @@ const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
-const fetch = require('node-fetch'); // 👈 Polyfill for OpenAI
 
-// 🌍 Fix for OpenAI fetch error
+// ✅ Fix for Node.js 16 - Polyfill fetch + Headers
+const fetch = require('node-fetch');
 globalThis.fetch = fetch;
+globalThis.Headers = fetch.Headers;
+globalThis.Request = fetch.Request;
 
 dotenv.config();
 
@@ -56,7 +58,7 @@ async function getProkeralaAccessToken() {
 
 // 📩 /api/kundli — Get birth chart
 app.post('/api/kundli', async (req, res) => {
-  const { dob, time, latitude, longitude, timezone } = req.body;
+  const { dob, time, latitude, longitude } = req.body;
 
   try {
     const token = await getProkeralaAccessToken();
@@ -65,10 +67,9 @@ app.post('/api/kundli', async (req, res) => {
       'https://api.prokerala.com/v2/astrology/birth-details',
       {
         params: {
-          datetime: `${dob}T${time}:00${timezone}`,
-          coordinates: `${latitude},${longitude}`,
-          timezone,
-          ayanamsa: 1, // 1 = Lahiri Ayanamsa
+          datetime: `${dob}T${time}:00+05:30`, // ✅ Proper ISO format
+          coordinates: `${latitude},${longitude}`, // ✅ Coordinates as string
+          ayanamsa: 1, // ✅ Lahiri ayanamsa
         },
         headers: {
           Authorization: `Bearer ${token}`,
@@ -131,10 +132,11 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
-// 🚀 Start server
+// Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
