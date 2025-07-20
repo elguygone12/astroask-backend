@@ -64,7 +64,7 @@ app.post('/api/kundli', async (req, res) => {
   try {
     const token = await getProkeralaAccessToken();
 
-    const datetime = `${dob}T${time}:00`; // 👈 Ensure full format
+    const datetime = `${dob}T${time}:00${timezone || '+05:30'}`; // use default if not provided
     const coordinates = `${latitude},${longitude}`;
     const ayanamsa = 1; // 👈 Mandatory field (can be 1, 3, or 5)
 
