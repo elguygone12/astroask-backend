@@ -1,4 +1,4 @@
-// ✅ Polyfills for fetch, Headers, FormData, Blob in Node.js
+// ✅ Polyfills for fetch, Headers, FormData, Blob in Node.js (using undici)
 const { fetch, Headers, FormData, Blob } = require('undici');
 globalThis.fetch = fetch;
 globalThis.Headers = Headers;
@@ -20,17 +20,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// 🚨 Check essential environment variables
+if (!process.env.OPENAI_API_KEY || !process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+  throw new Error('❌ Missing required .env variables: OPENAI_API_KEY, CLIENT_ID, CLIENT_SECRET');
+}
+
 app.use(cors());
 app.use(bodyParser.json());
 
-// Setup OpenAI
+// 🧠 Setup OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Create cache dir if not exists
+// 🗃️ Create cache dir if not exists
 const cacheDir = path.join(__dirname, 'cache');
 if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
 
-// Utility: Create cache file path
+// 🧾 Utility: Create cache file path
 function getCacheFilePath(type, data) {
   const hash = crypto.createHash('sha256').update(JSON.stringify({ type, data })).digest('hex');
   return path.join(cacheDir, `${type}_${hash}.json`);
@@ -59,23 +64,24 @@ async function getProkeralaAccessToken() {
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
 
+  // ✅ Input validation
+  if (!dob || !time || !latitude || !longitude) {
+    return res.status(400).json({ error: 'Missing required fields (dob, time, latitude, longitude)' });
+  }
+
   try {
     const token = await getProkeralaAccessToken();
 
-    const datetime = `${dob}T${time}:00${timezone || '+05:30'}`;
-    const coordinates = `${latitude},${longitude}`;
-    const ayanamsa = 1; // 👈 Required: 1, 3, or 5
+    const tz = timezone || '+05:30';
+    const datetime = `${dob}T${time}:00${tz}`;
+
+    // Format coordinates properly
+    const coordinates = `${parseFloat(latitude).toFixed(2)},${parseFloat(longitude).toFixed(2)}`;
+    const ayanamsa = 1; // Allowed values: 1, 3, 5
 
     const response = await axios.get('https://api.prokerala.com/v2/astrology/birth-details', {
-      params: {
-        datetime,
-        coordinates,
-        timezone,
-        ayanamsa,
-      },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      params: { datetime, coordinates, timezone: tz, ayanamsa },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     res.json({ data: response.data });
@@ -98,7 +104,7 @@ app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
 
-// 💡 Explanation Logic with Cache
+// 💡 GPT Explanation Logic (with file-based cache)
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
   const filePath = getCacheFilePath(type, { data, language });
@@ -123,9 +129,10 @@ async function handleAIExplanation(req, res, type) {
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const explanation = aiResponse.choices[0]?.message?.content?.trim() || 'No explanation generated.';
+    const explanation = aiResponse.choices?.[0]?.message?.content?.trim() || 'No explanation generated.';
     const result = { explanation };
     fs.writeFileSync(filePath, JSON.stringify(result, null, 2), 'utf-8');
+    console.log(`📩 AI Explanation (${type}) generated.`);
     res.json(result);
   } catch (err) {
     console.error(`❌ ${type} AI error:`, err?.response?.data || err.message);
