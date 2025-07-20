@@ -65,7 +65,7 @@ app.post('/api/kundli', async (req, res) => {
       'https://api.prokerala.com/v2/astrology/birth-details',
       {
         params: {
-          datetime: `${dob}T${time}`,
+          datetime: `${dob}T${time}:00${timezone}`,
           coordinates: `${latitude},${longitude}`,
           timezone,
           ayanamsa: 1, // 1 = Lahiri Ayanamsa
