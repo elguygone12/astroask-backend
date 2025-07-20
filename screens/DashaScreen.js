@@ -60,25 +60,25 @@ const DashaScreen = ({ route }) => {
     fetchAIExplanation();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>
-          {language === 'hi'
-            ? 'दशा विवरण ला रहा है...'
-            : 'Generating Dasha Explanation...'}
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.heading}>
-        {language === 'hi' ? 'AI दशा विवरण' : 'AI Dasha Period Analysis'}
-      </Text>
-      <Text style={styles.explanation}>{explanation}</Text>
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>
+            {language === 'hi'
+              ? 'दशा विवरण ला रहा है...'
+              : 'Generating Dasha Explanation...'}
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Text style={styles.heading}>
+            {language === 'hi' ? 'AI दशा विवरण' : 'AI Dasha Period Analysis'}
+          </Text>
+          <Text style={styles.explanation}>{explanation}</Text>
+        </>
+      )}
     </ScrollView>
   );
 };

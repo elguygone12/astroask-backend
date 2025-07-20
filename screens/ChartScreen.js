@@ -11,6 +11,7 @@ import COLORS from '../constants/colors';
 
 const ChartScreen = ({ route }) => {
   const { dob, time, location, language = 'en' } = route.params;
+
   const [chartData, setChartData] = useState(null);
   const [explanation, setExplanation] = useState('');
   const [loadingChart, setLoadingChart] = useState(true);
@@ -19,26 +20,33 @@ const ChartScreen = ({ route }) => {
   useEffect(() => {
     const fetchChart = async () => {
       try {
-        const response = await fetch('https://prokerala-backend.onrender.com/api/kundli', {
+        const response = await fetch('https://astroask-backend.onrender.com/api/kundli', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             dob,
             time,
-            latitude: location.latitude,
-            longitude: location.longitude,
-            timezone: location.timezone,
+            latitude: 28.6139, // Delhi
+            longitude: 77.2090, // Delhi
+            timezone: '+05:30',
           }),
         });
 
-        const text = await response.text(); // fetch as text for debugging
+        const text = await response.text();
         console.log('📦 Raw backend response:', text);
 
-        const json = JSON.parse(text); // attempt to parse JSON
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          console.error('❌ JSON parse error:', e, '\nRaw:', text);
+          Alert.alert('Error', 'Invalid response from server.');
+          return;
+        }
 
         if (json.data) {
           setChartData(json.data);
-          fetchExplanation(json.data); // call ChatGPT after data
+          fetchExplanation(json.data);
         } else {
           Alert.alert('Error', 'Chart data not available.');
         }
@@ -53,7 +61,7 @@ const ChartScreen = ({ route }) => {
     const fetchExplanation = async (data) => {
       setLoadingAI(true);
       try {
-        const res = await fetch('https://prokerala-backend.onrender.com/api/explain/chart', {
+        const res = await fetch('https://astroask-backend.onrender.com/api/explain/chart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data, language }),
@@ -160,6 +168,9 @@ const styles = StyleSheet.create({
 });
 
 export default ChartScreen;
+
+
+
 
 
 
