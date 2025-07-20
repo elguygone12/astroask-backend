@@ -4,9 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const OpenAI = require('openai');
-const crypto = require('crypto');
 const axios = require('axios');
+const crypto = require('crypto');
+
+// 🧠 NEW OpenAI SDK
+const OpenAI = require('openai');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 dotenv.config();
 
@@ -16,18 +19,19 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Setup OpenAI (v4 SDK)
+// 🔐 Setup OpenAI client properly
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  fetch,
 });
 
-// 🔒 Utility to get cache file path
+// 🗂️ Cache path utility using SHA256
 function getCacheFilePath(type, data) {
   const hash = crypto.createHash('sha256').update(JSON.stringify({ type, data })).digest('hex');
   return path.join(__dirname, 'cache', `${type}_${hash}.json`);
 }
 
-// 🗂️ Ensure cache folder exists
+// Ensure cache directory exists
 const cacheDir = path.join(__dirname, 'cache');
 if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
 
@@ -51,38 +55,38 @@ app.post('/api/kundli', async (req, res) => {
 
     res.json({ data: response.data });
   } catch (err) {
-    console.error('❌ Prokerala fetch error:', err?.response?.data || err.message);
+    console.error('❌ Prokerala error:', err?.response?.data || err.message);
     res.status(500).json({ error: 'Failed to fetch chart data' });
   }
 });
 
-// 🧠 POST /api/explain/chart — AI explanation for chart
+// 🧠 POST /api/explain/chart
 app.post('/api/explain/chart', async (req, res) => {
   await handleAIExplanation(req, res, 'chart');
 });
 
-// 🧠 POST /api/explain/dasha — AI explanation for Dasha
+// 🧠 POST /api/explain/dasha
 app.post('/api/explain/dasha', async (req, res) => {
   await handleAIExplanation(req, res, 'dasha');
 });
 
-// 🧠 POST /api/explain/yearly — AI explanation for yearly forecast
+// 🧠 POST /api/explain/yearly
 app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
 
-// ✨ AI Explanation Handler
+// 🧠 GPT explanation logic (shared)
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
   const filePath = getCacheFilePath(type, { data, language });
 
-  // Serve from cache if exists
+  // Return from cache if exists
   if (fs.existsSync(filePath)) {
     const cached = fs.readFileSync(filePath, 'utf-8');
     return res.json(JSON.parse(cached));
   }
 
-  // 💬 Create prompt
+  // 🔮 Prompt
   let prompt = '';
   if (type === 'chart') {
     prompt = `Give an astrology reading explanation in ${language} based on the following kundli chart data:\n\n${JSON.stringify(data, null, 2)}`;
@@ -109,10 +113,10 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
-// 🚀 Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
