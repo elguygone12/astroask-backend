@@ -1,9 +1,13 @@
-// ✅ Proper Polyfills for Node.js fetch environment using undici only
-const { fetch, Headers, FormData, Blob } = require('undici');
+// ✅ Use undici for fetch, Headers, and Blob
+const { fetch, Headers, Blob } = require('undici');
 globalThis.fetch = fetch;
 globalThis.Headers = Headers;
-globalThis.FormData = FormData;
 globalThis.Blob = Blob;
+
+// ✅ Use formdata-node for FormData compatibility with OpenAI SDK
+const { FormData } = require('formdata-node');
+globalThis.FormData = FormData;
+
 
 const express = require('express');
 const bodyParser = require('body-parser');
