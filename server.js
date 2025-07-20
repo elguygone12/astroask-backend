@@ -8,6 +8,10 @@ const { OpenAI } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
 
+// ✅ Polyfill fetch for OpenAI in Node.js (required for Node 16 or older)
+globalThis.fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 dotenv.config();
 
 const app = express();
@@ -25,7 +29,10 @@ if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
 
 // Utility: Create cache file path
 function getCacheFilePath(type, data) {
-  const hash = crypto.createHash('sha256').update(JSON.stringify({ type, data })).digest('hex');
+  const hash = crypto
+    .createHash('sha256')
+    .update(JSON.stringify({ type, data }))
+    .digest('hex');
   return path.join(cacheDir, `${type}_${hash}.json`);
 }
 
@@ -36,8 +43,8 @@ async function getProkeralaAccessToken() {
       'https://api.prokerala.com/token',
       new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: process.env.PROKERALA_CLIENT_ID,
-        client_secret: process.env.PROKERALA_CLIENT_SECRET,
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
       }),
       {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -104,11 +111,23 @@ async function handleAIExplanation(req, res, type) {
 
   let prompt = '';
   if (type === 'chart') {
-    prompt = `Give a detailed astrology explanation in ${language} based on this chart:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `Give a detailed astrology explanation in ${language} based on this chart:\n\n${JSON.stringify(
+      data,
+      null,
+      2
+    )}`;
   } else if (type === 'dasha') {
-    prompt = `Explain the following Vimshottari Dasha period in ${language}:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `Explain the following Vimshottari Dasha period in ${language}:\n\n${JSON.stringify(
+      data,
+      null,
+      2
+    )}`;
   } else if (type === 'yearly') {
-    prompt = `Provide a yearly astrology prediction in ${language} based on:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `Provide a yearly astrology prediction in ${language} based on:\n\n${JSON.stringify(
+      data,
+      null,
+      2
+    )}`;
   }
 
   try {
@@ -117,7 +136,8 @@ async function handleAIExplanation(req, res, type) {
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const explanation = aiResponse.choices[0]?.message?.content?.trim() || 'No explanation generated.';
+    const explanation =
+      aiResponse.choices[0]?.message?.content?.trim() || 'No explanation generated.';
     const result = { explanation };
     fs.writeFileSync(filePath, JSON.stringify(result, null, 2), 'utf-8');
     res.json(result);
