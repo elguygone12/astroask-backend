@@ -1,165 +1,129 @@
-// server.js with file-based caching and 24-hour expiry
-
-require('dotenv').config();
 const express = require('express');
-const fetch = require('node-fetch');
+const dotenv = require('dotenv');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { OpenAI } = require('openai');
+const crypto = require('crypto');
+const fetch = require('node-fetch');
+
+dotenv.config();
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(bodyParser.json());
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const PORT = process.env.PORT || 10000;
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 📁 Setup cache folder
 const CACHE_DIR = path.join(__dirname, 'cache');
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR);
 
-// ⏱️ Cache helpers
-function getCachePath(key) {
-  return path.join(CACHE_DIR, `${key}.json`);
-}
+// ✅ Short hashed cache key to avoid ENAMETOOLONG
+const getCacheKey = (type, data, language) => {
+  const raw = JSON.stringify({ type, data, language });
+  const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  return `${hash}.json`;
+};
 
-function createCacheKey(obj) {
-  return Buffer.from(JSON.stringify(obj)).toString('base64').replace(/[/=+]/g, '_');
-}
-
-function readCacheIfFresh(cachePath, maxAgeMs = 24 * 60 * 60 * 1000) {
-  if (fs.existsSync(cachePath)) {
-    try {
-      const stats = fs.statSync(cachePath);
-      const fileAge = Date.now() - stats.mtimeMs;
-
-      if (fileAge < maxAgeMs) {
-        const cached = fs.readFileSync(cachePath, 'utf-8');
-        return JSON.parse(cached);
-      } else {
-        fs.unlinkSync(cachePath); // delete old cache
-      }
-    } catch (err) {
-      console.error('❌ Error reading cache:', err);
-      fs.unlinkSync(cachePath); // corrupted
-    }
+const getCached = (key) => {
+  const file = path.join(CACHE_DIR, key);
+  if (fs.existsSync(file)) {
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
   }
   return null;
-}
+};
 
-// 🔐 Get Prokerala Access Token
-async function getAccessToken() {
-  const res = await fetch('https://api.prokerala.com/token', {
-    method: 'POST',
-    headers: {
-      Authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
+const setCached = (key, data) => {
+  const file = path.join(CACHE_DIR, key);
+  fs.writeFileSync(file, JSON.stringify(data), 'utf-8');
+};
+
+const handleAIExplanation = async (type, data, language = 'en') => {
+  const cacheKey = getCacheKey(type, data, language);
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const prompt = {
+    chart: `Explain this Kundli chart in simple ${language === 'hi' ? 'Hindi' : 'English'}:\n\n${JSON.stringify(data)}`,
+    dasha: `Explain this Vimshottari Dasha in simple ${language === 'hi' ? 'Hindi' : 'English'}:\n\n${JSON.stringify(data)}`,
+    yearly: `Give a detailed yearly prediction based on this chart for the upcoming year in ${language === 'hi' ? 'Hindi' : 'English'}:\n\n${JSON.stringify(data)}`
+  }[type];
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-3.5-turbo',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
   });
-  const data = await res.json();
-  return data.access_token;
-}
 
-// 📊 Kundli Chart API with 24h cache
+  const explanation = completion.choices[0]?.message?.content?.trim() || '';
+  const result = { explanation };
+  setCached(cacheKey, result);
+  return result;
+};
+
+// 🌟 API: Generate Kundli chart via Prokerala API
 app.post('/api/kundli', async (req, res) => {
-  const { dob, time, latitude, longitude, timezone } = req.body;
-
-  if (!dob || !time || !latitude || !longitude || !timezone) {
-    return res.status(400).json({ error: 'Missing birth details' });
-  }
-
-  const datetime = `${dob}T${time}:00${timezone}`;
-  const coordinates = `${latitude},${longitude}`;
-  const cacheKey = createCacheKey({ datetime, coordinates });
-  const cachePath = getCachePath(cacheKey);
-
-  const cachedData = readCacheIfFresh(cachePath);
-  if (cachedData) return res.json(cachedData);
-
   try {
-    const token = await getAccessToken();
-    const response = await fetch(
-      `https://api.prokerala.com/v2/astrology/kundli?datetime=${encodeURIComponent(datetime)}&coordinates=${coordinates}&ayanamsa=1`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const { dob, time, latitude, longitude, timezone } = req.body;
 
-    const text = await response.text();
-    const data = JSON.parse(text);
+    const params = new URLSearchParams({
+      datetime: `${dob}T${time}+05:30`,
+      coordinates: `${latitude},${longitude}`,
+    });
 
-    fs.writeFileSync(cachePath, JSON.stringify(data));
-    res.json(data);
-  } catch (err) {
-    console.error('❌ Kundli error:', err);
-    res.status(500).json({ error: 'Failed to fetch chart' });
+    const response = await fetch(`https://api.prokerala.com/v2/astrology/chart?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.PROKERALA_ACCESS_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    return res.json({ data });
+  } catch (error) {
+    console.error('❌ Error fetching chart:', error);
+    res.status(500).json({ error: 'Chart fetch failed.' });
   }
 });
 
-// 🧠 AI Explanation (Chart, Dasha, Yearly) with cache
-async function handleAIExplanation(req, res, promptType) {
-  const { data, language } = req.body;
-  const cacheKey = createCacheKey({ type: promptType, data, language });
-  const cachePath = getCachePath(cacheKey);
-
-  const cachedData = readCacheIfFresh(cachePath);
-  if (cachedData) return res.json(cachedData);
-
-  let systemPrompt = '';
-  switch (promptType) {
-    case 'chart':
-      systemPrompt = `You are an expert Vedic astrologer. Explain the following kundli chart data clearly in ${language === 'hi' ? 'Hindi' : 'English'}.`;
-      break;
-    case 'dasha':
-      systemPrompt = `You are an expert Vedic astrologer. Explain the following Vimshottari Dasha periods in ${language === 'hi' ? 'Hindi' : 'English'}.`;
-      break;
-    case 'yearly':
-      systemPrompt = `You are an astrologer. Based on the user's birth details (DOB, time, location), generate a personalized yearly forecast in ${language === 'hi' ? 'Hindi' : 'English'}.`;
-      break;
-  }
-
+// 🌟 API: AI Explanation - Chart
+app.post('/api/explain/chart', async (req, res) => {
   try {
-    const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: JSON.stringify(data) },
-        ],
-      }),
-    });
-
-    const gptJson = await gptRes.json();
-    const explanation = gptJson.choices?.[0]?.message?.content || 'No explanation received.';
-    const result = { explanation };
-
-    fs.writeFileSync(cachePath, JSON.stringify(result));
+    const result = await handleAIExplanation('chart', req.body.data, req.body.language);
     res.json(result);
-  } catch (error) {
-    console.error(`❌ ${promptType} AI error:`, error);
-    res.status(500).json({ error: 'Failed to get explanation' });
+  } catch (err) {
+    console.error('❌ Chart AI error:', err);
+    res.status(500).json({ error: 'Chart AI failed' });
   }
-}
+});
 
-app.post('/api/explain/chart', (req, res) => handleAIExplanation(req, res, 'chart'));
-app.post('/api/explain/dasha', (req, res) => handleAIExplanation(req, res, 'dasha'));
-app.post('/api/explain/yearly', (req, res) => handleAIExplanation(req, res, 'yearly'));
+// 🌟 API: AI Explanation - Dasha
+app.post('/api/explain/dasha', async (req, res) => {
+  try {
+    const result = await handleAIExplanation('dasha', req.body.data, req.body.language);
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Dasha AI error:', err);
+    res.status(500).json({ error: 'Dasha AI failed' });
+  }
+});
 
-// 404 fallback
-app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
+// 🌟 API: AI Explanation - Yearly
+app.post('/api/explain/yearly', async (req, res) => {
+  try {
+    const result = await handleAIExplanation('yearly', req.body.data, req.body.language);
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Yearly AI error:', err);
+    res.status(500).json({ error: 'Yearly AI failed' });
+  }
+});
 
-// Start server
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
