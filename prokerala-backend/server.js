@@ -1,12 +1,12 @@
-// ✅ Use undici for fetch, Headers, and Blob
-const { fetch, Headers, Blob } = require('undici');
+const { fetch, Headers } = require('undici');
+const { FormData } = require('formdata-node');
+const Blob = require('fetch-blob');
+
 globalThis.fetch = fetch;
 globalThis.Headers = Headers;
+globalThis.FormData = FormData;
 globalThis.Blob = Blob;
 
-// ✅ Use formdata-node for FormData compatibility with OpenAI SDK
-const { FormData } = require('formdata-node');
-globalThis.FormData = FormData;
 
 
 const express = require('express');
