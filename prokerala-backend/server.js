@@ -1,3 +1,10 @@
+// ✅ Polyfills for fetch, Headers, FormData, Blob in Node.js
+const { fetch, Headers, FormData, Blob } = require('undici');
+globalThis.fetch = fetch;
+globalThis.Headers = Headers;
+globalThis.FormData = FormData;
+globalThis.Blob = Blob;
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -7,15 +14,6 @@ const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
 const crypto = require('crypto');
 const axios = require('axios');
-
-// 🌐 Polyfill fetch + Blob for Node 16
-const fetch = require('node-fetch');
-const { Blob } = require('buffer');
-globalThis.fetch = fetch;
-globalThis.Headers = fetch.Headers;
-globalThis.Request = fetch.Request;
-globalThis.Response = fetch.Response;
-globalThis.Blob = Blob;
 
 dotenv.config();
 
@@ -64,9 +62,9 @@ app.post('/api/kundli', async (req, res) => {
   try {
     const token = await getProkeralaAccessToken();
 
-    const datetime = `${dob}T${time}:00${timezone || '+05:30'}`; // use default if not provided
+    const datetime = `${dob}T${time}:00${timezone || '+05:30'}`;
     const coordinates = `${latitude},${longitude}`;
-    const ayanamsa = 1; // 👈 Mandatory field (can be 1, 3, or 5)
+    const ayanamsa = 1; // 👈 Required: 1, 3, or 5
 
     const response = await axios.get('https://api.prokerala.com/v2/astrology/birth-details', {
       params: {
@@ -100,7 +98,7 @@ app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
 
-// 💡 Explanation Logic (with cache)
+// 💡 Explanation Logic with Cache
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
   const filePath = getCacheFilePath(type, { data, language });
