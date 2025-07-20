@@ -1,30 +1,33 @@
-const { fetch, Headers } = require('undici');
-const { FormData } = require('formdata-node');
-const Blob = require('fetch-blob');
+import express from 'express';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import crypto from 'crypto';
+import { OpenAI } from 'openai';
+import { fetch, Headers } from 'undici';
+import { FormData } from 'formdata-node';
+import Blob from 'fetch-blob';
+import bodyParser from 'body-parser';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+// 👇 Needed for __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// 🌍 Polyfill globals
 globalThis.fetch = fetch;
 globalThis.Headers = Headers;
 globalThis.FormData = FormData;
 globalThis.Blob = Blob;
-
-
-
-const express = require('express');
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { OpenAI } = require('openai');
-const crypto = require('crypto');
-const axios = require('axios');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// 🚨 Check essential environment variables
 if (!process.env.OPENAI_API_KEY || !process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
   throw new Error('❌ Missing required .env variables: OPENAI_API_KEY, CLIENT_ID, CLIENT_SECRET');
 }
@@ -68,20 +71,16 @@ async function getProkeralaAccessToken() {
 app.post('/api/kundli', async (req, res) => {
   const { dob, time, latitude, longitude, timezone } = req.body;
 
-  // ✅ Input validation
   if (!dob || !time || !latitude || !longitude) {
     return res.status(400).json({ error: 'Missing required fields (dob, time, latitude, longitude)' });
   }
 
   try {
     const token = await getProkeralaAccessToken();
-
     const tz = timezone || '+05:30';
     const datetime = `${dob}T${time}:00${tz}`;
-
-    // Format coordinates properly
     const coordinates = `${parseFloat(latitude).toFixed(2)},${parseFloat(longitude).toFixed(2)}`;
-    const ayanamsa = 1; // Allowed values: 1, 3, 5
+    const ayanamsa = 1;
 
     const response = await axios.get('https://api.prokerala.com/v2/astrology/birth-details', {
       params: { datetime, coordinates, timezone: tz, ayanamsa },
@@ -99,11 +98,9 @@ app.post('/api/kundli', async (req, res) => {
 app.post('/api/explain/chart', async (req, res) => {
   await handleAIExplanation(req, res, 'chart');
 });
-
 app.post('/api/explain/dasha', async (req, res) => {
   await handleAIExplanation(req, res, 'dasha');
 });
-
 app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
@@ -148,6 +145,7 @@ async function handleAIExplanation(req, res, type) {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
