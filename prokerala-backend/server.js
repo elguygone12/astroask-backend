@@ -111,13 +111,16 @@ async function handleAIExplanation(req, res, type) {
     return res.json(JSON.parse(cached));
   }
 
+  // ✅ Language name handling (Hindi fix)
+  const langName = language === 'hi' ? 'Hindi' : 'English';
+
   let prompt = '';
   if (type === 'chart') {
-    prompt = `Give a detailed astrology explanation in ${language} based on this chart:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `Give a detailed astrology explanation in ${langName} based on this chart:\n\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'dasha') {
-    prompt = `Explain the following Vimshottari Dasha period in ${language}:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `Explain the following Vimshottari Dasha period in ${langName}:\n\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'yearly') {
-    prompt = `Provide a yearly astrology prediction in ${language} based on:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `Provide a yearly astrology prediction in ${langName} based on:\n\n${JSON.stringify(data, null, 2)}`;
   }
 
   try {
@@ -176,6 +179,7 @@ app.get('/test-gpt', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
