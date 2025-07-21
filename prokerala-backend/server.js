@@ -35,6 +35,9 @@ if (!process.env.OPENAI_API_KEY || !process.env.CLIENT_ID || !process.env.CLIENT
 app.use(cors());
 app.use(bodyParser.json());
 
+// ✅ Log OpenAI key presence
+console.log('🔑 Loaded OPENAI_API_KEY:', !!process.env.OPENAI_API_KEY);
+
 // 🧠 Setup OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -141,10 +144,26 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
+// ✅ DEBUG TEST ROUTE FOR GPT CONNECTIVITY
+app.get('/test-gpt', async (req, res) => {
+  try {
+    console.log('🚀 /test-gpt route triggered');
+    const result = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: 'Say hello!' }],
+    });
+    res.json({ message: result.choices[0].message.content });
+  } catch (err) {
+    console.error('❌ GPT Test Error:', err?.response?.data || err.message);
+    res.status(500).json({ error: 'OpenAI test failed' });
+  }
+});
+
 // 🚀 Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
