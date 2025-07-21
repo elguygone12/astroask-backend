@@ -5,7 +5,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import crypto from 'crypto';
-import { OpenAI } from 'openai';
 import { fetch, Headers } from 'undici';
 import { FormData } from 'formdata-node';
 import Blob from 'fetch-blob';
@@ -13,11 +12,9 @@ import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// 👇 Needed for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 🌍 Polyfill globals
 globalThis.fetch = fetch;
 globalThis.Headers = Headers;
 globalThis.FormData = FormData;
@@ -35,11 +32,7 @@ if (!process.env.OPENAI_API_KEY || !process.env.CLIENT_ID || !process.env.CLIENT
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Log OpenAI key presence
 console.log('🔑 Loaded OPENAI_API_KEY:', !!process.env.OPENAI_API_KEY);
-
-// 🧠 Setup OpenAI
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // 🗃️ Create cache dir if not exists
 const cacheDir = path.join(__dirname, 'cache');
@@ -108,7 +101,7 @@ app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
 
-// 💡 GPT Explanation Logic (with file-based cache)
+// 💡 GPT Explanation Logic (axios version)
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
   const filePath = getCacheFilePath(type, { data, language });
@@ -128,12 +121,21 @@ async function handleAIExplanation(req, res, type) {
   }
 
   try {
-    const aiResponse = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const aiResponse = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    const explanation = aiResponse.choices?.[0]?.message?.content?.trim() || 'No explanation generated.';
+    const explanation = aiResponse.data.choices?.[0]?.message?.content?.trim() || 'No explanation generated.';
     const result = { explanation };
     fs.writeFileSync(filePath, JSON.stringify(result, null, 2), 'utf-8');
     console.log(`📩 AI Explanation (${type}) generated.`);
@@ -144,15 +146,26 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
-// ✅ DEBUG TEST ROUTE FOR GPT CONNECTIVITY
+// ✅ /test-gpt route using axios
 app.get('/test-gpt', async (req, res) => {
   try {
     console.log('🚀 /test-gpt route triggered');
-    const result = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: 'Say hello!' }],
-    });
-    res.json({ message: result.choices[0].message.content });
+
+    const aiResponse = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'Say hello!' }],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    res.json({ message: aiResponse.data.choices?.[0]?.message?.content });
   } catch (err) {
     console.error('❌ GPT Test Error:', err?.response?.data || err.message);
     res.status(500).json({ error: 'OpenAI test failed' });
@@ -163,6 +176,7 @@ app.get('/test-gpt', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
