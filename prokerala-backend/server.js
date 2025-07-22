@@ -111,16 +111,15 @@ async function handleAIExplanation(req, res, type) {
     return res.json(JSON.parse(cached));
   }
 
-  // ✅ Language name handling (Hindi fix)
   const langName = language === 'hi' ? 'Hindi' : 'English';
-
   let prompt = '';
+
   if (type === 'chart') {
-    prompt = `Give a detailed astrology explanation in ${langName} based on this chart:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `You're a skilled Vedic astrologer. Based on the birth chart below, give a long, detailed, paragraph-style explanation in ${langName}. Focus on nakshatra, planetary influences, yogas, and rashi. Do NOT mention coordinates, time zone, or the location Delhi anywhere.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'dasha') {
-    prompt = `Explain the following Vimshottari Dasha period in ${langName}:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `You're a skilled Vedic astrologer. Based on the following birth data, simulate a detailed Vimshottari Dasha period interpretation in ${langName}. Focus on the effects of planetary periods on career, relationships, and health. Keep it in paragraph form. Do NOT mention coordinates, time zone, or the location Delhi.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'yearly') {
-    prompt = `Provide a yearly astrology prediction in ${langName} based on:\n\n${JSON.stringify(data, null, 2)}`;
+    prompt = `You are a Vedic astrologer. Based on the following birth chart, give a long and insightful yearly prediction in ${langName}. Use paragraph format and do NOT include coordinates, timezone, or mention Delhi in any way.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   }
 
   try {
@@ -179,6 +178,7 @@ app.get('/test-gpt', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
