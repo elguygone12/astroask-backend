@@ -113,16 +113,20 @@ async function handleAIExplanation(req, res, type) {
 
   const isHindi = language === 'hi';
   let prompt = '';
+  let maxTokens = 1500;
 
   if (type === 'chart') {
+    maxTokens = 1800;
     prompt = isHindi
       ? `आप एक कुशल वैदिक ज्योतिषी हैं। नीचे दिए गए जन्म कुंडली डेटा के आधार पर एक लंबा, विस्तृत और पैराग्राफ-शैली में हिंदी में ज्योतिषीय विश्लेषण दें। कृपया नक्षत्र, ग्रहों का प्रभाव, योग और राशि के आधार पर व्याख्या करें। स्थान, समय क्षेत्र या दिल्ली का कोई उल्लेख न करें।\n\n${JSON.stringify(data, null, 2)}`
       : `You're a skilled Vedic astrologer. Based on the birth chart below, give a long, detailed, paragraph-style explanation in English. Focus on nakshatra, planetary influences, yogas, and rashi. Do NOT mention coordinates, time zone, or the location Delhi anywhere.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'dasha') {
+    maxTokens = 2000;
     prompt = isHindi
       ? `आप एक अत्यंत अनुभवी वैदिक ज्योतिषी हैं। कृपया नीचे दिए गए जन्म डेटा के आधार पर एक अत्यंत विस्तृत और गहराई से विश्लेषण करें कि विभिन्न ग्रहों की दशाएं व्यक्ति के जीवन के किन-किन क्षेत्रों (जैसे करियर, स्वास्थ्य, धन, वैवाहिक जीवन, पारिवारिक संबंध और मानसिक स्थिति) को कैसे प्रभावित करेंगी। व्याख्या पैराग्राफ शैली में दें, और कृपया स्थान, समय क्षेत्र या दिल्ली का कोई उल्लेख न करें। व्याख्या हिंदी में होनी चाहिए और बहुत ही पेशेवर तथा सटीक होनी चाहिए।\n\nजन्म डेटा:\n${JSON.stringify(data, null, 2)}`
       : `You are a highly experienced Vedic astrologer. Based on the following birth data, provide a comprehensive, detailed analysis of the Vimshottari Dasha system. Elaborate on how the planetary periods affect the person's career, health, wealth, marriage, family life, and mental state. The explanation should be in paragraph form, professional in tone, and must not mention coordinates, time zone, or Delhi. Use English for the explanation.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'yearly') {
+    maxTokens = 1800;
     prompt = isHindi
       ? `आप एक वैदिक ज्योतिषी हैं। नीचे दिए गए कुंडली डेटा के आधार पर आगामी वर्ष का विस्तृत और गहराई से विश्लेषण करें। कृपया पैराग्राफ शैली में लिखें और स्थान, समय क्षेत्र या दिल्ली का उल्लेख न करें।\n\n${JSON.stringify(data, null, 2)}`
       : `You are a Vedic astrologer. Based on the following birth chart, give a long and insightful yearly prediction in English. Use paragraph format and do NOT include coordinates, timezone, or mention Delhi in any way.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
@@ -134,6 +138,8 @@ async function handleAIExplanation(req, res, type) {
       {
         model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],
+        max_tokens: maxTokens,
+        temperature: 0.9,
       },
       {
         headers: {
@@ -184,6 +190,7 @@ app.get('/test-gpt', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
