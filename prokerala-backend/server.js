@@ -101,7 +101,7 @@ app.post('/api/explain/yearly', async (req, res) => {
   await handleAIExplanation(req, res, 'yearly');
 });
 
-// 💡 GPT Explanation Logic (axios version)
+// 💡 GPT Explanation Logic
 async function handleAIExplanation(req, res, type) {
   const { data, language = 'en' } = req.body;
   const filePath = getCacheFilePath(type, { data, language });
@@ -111,8 +111,8 @@ async function handleAIExplanation(req, res, type) {
     return res.json(JSON.parse(cached));
   }
 
-  let prompt = '';
   const isHindi = language === 'hi';
+  let prompt = '';
 
   if (type === 'chart') {
     prompt = isHindi
@@ -120,8 +120,8 @@ async function handleAIExplanation(req, res, type) {
       : `You're a skilled Vedic astrologer. Based on the birth chart below, give a long, detailed, paragraph-style explanation in English. Focus on nakshatra, planetary influences, yogas, and rashi. Do NOT mention coordinates, time zone, or the location Delhi anywhere.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'dasha') {
     prompt = isHindi
-      ? `आप एक कुशल वैदिक ज्योतिषी हैं। नीचे दिए गए जन्म डेटा के आधार पर, एक विस्तृत और पैराग्राफ शैली में हिंदी में विम्शोत्तरी दशा प्रणाली की व्याख्या करें। ग्रहों की दशा का करियर, स्वास्थ्य और रिश्तों पर प्रभाव समझाएं। स्थान, समय क्षेत्र या दिल्ली का उल्लेख न करें।\n\n${JSON.stringify(data, null, 2)}`
-      : `You're a skilled Vedic astrologer. Based on the following birth data, simulate a detailed Vimshottari Dasha period interpretation in English. Focus on the effects of planetary periods on career, relationships, and health. Keep it in paragraph form. Do NOT mention coordinates, time zone, or the location Delhi.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
+      ? `आप एक अत्यंत अनुभवी वैदिक ज्योतिषी हैं। कृपया नीचे दिए गए जन्म डेटा के आधार पर एक अत्यंत विस्तृत और गहराई से विश्लेषण करें कि विभिन्न ग्रहों की दशाएं व्यक्ति के जीवन के किन-किन क्षेत्रों (जैसे करियर, स्वास्थ्य, धन, वैवाहिक जीवन, पारिवारिक संबंध और मानसिक स्थिति) को कैसे प्रभावित करेंगी। व्याख्या पैराग्राफ शैली में दें, और कृपया स्थान, समय क्षेत्र या दिल्ली का कोई उल्लेख न करें। व्याख्या हिंदी में होनी चाहिए और बहुत ही पेशेवर तथा सटीक होनी चाहिए।\n\nजन्म डेटा:\n${JSON.stringify(data, null, 2)}`
+      : `You are a highly experienced Vedic astrologer. Based on the following birth data, provide a comprehensive, detailed analysis of the Vimshottari Dasha system. Elaborate on how the planetary periods affect the person's career, health, wealth, marriage, family life, and mental state. The explanation should be in paragraph form, professional in tone, and must not mention coordinates, time zone, or Delhi. Use English for the explanation.\n\nBirth chart data:\n${JSON.stringify(data, null, 2)}`;
   } else if (type === 'yearly') {
     prompt = isHindi
       ? `आप एक वैदिक ज्योतिषी हैं। नीचे दिए गए कुंडली डेटा के आधार पर आगामी वर्ष का विस्तृत और गहराई से विश्लेषण करें। कृपया पैराग्राफ शैली में लिखें और स्थान, समय क्षेत्र या दिल्ली का उल्लेख न करें।\n\n${JSON.stringify(data, null, 2)}`
@@ -154,7 +154,6 @@ async function handleAIExplanation(req, res, type) {
   }
 }
 
-
 // ✅ /test-gpt route using axios
 app.get('/test-gpt', async (req, res) => {
   try {
@@ -185,6 +184,7 @@ app.get('/test-gpt', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 
 
 
