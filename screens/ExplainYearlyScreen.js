@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
 import COLORS from '../constants/colors';
 
@@ -40,17 +41,29 @@ const ExplainYearlyScreen = ({ route }) => {
     setLoading(true);
 
     try {
-      const res = await fetch('https://prokerala-backend.onrender.com/api/explain/yearly', {
+      const res = await fetch('https://astroask-backend.onrender.com/api/explain/yearly', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           data: { dob, time, location },
           language,
         }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const json = await res.json();
-      setExplanation(json.explanation || 'No explanation received.');
+
+      if (!json || !json.explanation) {
+        throw new Error('Invalid JSON response');
+      }
+
+      setExplanation(json.explanation);
     } catch (error) {
       console.error('❌ Yearly AI error:', error);
       setExplanation(
@@ -64,51 +77,58 @@ const ExplainYearlyScreen = ({ route }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.heading}>
-        {language === 'hi' ? '🌟 AI वार्षिक भविष्यवाणी 🌟' : '🌟 AI Yearly Forecast 🌟'}
-      </Text>
+    <ImageBackground
+      source={require('../assets/backgrounds/kundli.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.heading}>
+          {language === 'hi' ? '🌟 AI वार्षिक भविष्यवाणी 🌟' : '🌟 AI Yearly Forecast 🌟'}
+        </Text>
 
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.languageButton, language === 'en' && styles.languageSelected]}
-          onPress={() => setLanguage('en')}
-        >
-          <Text style={styles.languageText}>🇬🇧 English</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.languageButton, language === 'hi' && styles.languageSelected]}
-          onPress={() => setLanguage('hi')}
-        >
-          <Text style={styles.languageText}>🇮🇳 हिंदी</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[styles.languageButton, language === 'en' && styles.languageSelected]}
+            onPress={() => setLanguage('en')}
+          >
+            <Text style={styles.languageText}>🇬🇧 English</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.languageButton, language === 'hi' && styles.languageSelected]}
+            onPress={() => setLanguage('hi')}
+          >
+            <Text style={styles.languageText}>🇮🇳 हिंदी</Text>
+          </TouchableOpacity>
+        </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>
-            {language === 'hi'
-              ? 'वार्षिक भविष्यवाणी ला रहा है...'
-              : 'Generating Yearly Forecast...'}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            {language === 'hi' ? '🔮 भविष्यवाणी विवरण' : '🔮 Forecast Details'}
-          </Text>
-          <Text style={styles.cardText}>{explanation}</Text>
-        </View>
-      )}
-    </ScrollView>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>
+              {language === 'hi'
+                ? 'वार्षिक भविष्यवाणी ला रहा है...'
+                : 'Generating Yearly Forecast...'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {language === 'hi' ? '🔮 भविष्यवाणी विवरण' : '🔮 Forecast Details'}
+            </Text>
+            <Text style={styles.cardText}>{explanation}</Text>
+          </View>
+        )}
+      </ScrollView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: COLORS.background,
+  },
+  container: {
     padding: 20,
   },
   heading: {
@@ -172,6 +192,9 @@ const styles = StyleSheet.create({
 });
 
 export default ExplainYearlyScreen;
+
+
+
 
 
 

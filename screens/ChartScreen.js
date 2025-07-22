@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
 import COLORS from '../constants/colors';
 
@@ -85,70 +86,78 @@ const ChartScreen = ({ route }) => {
   const { nakshatra, chandra_rasi, soorya_rasi, additional_info } = chartData || {};
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.heading}>✨ Your Astrology Chart ✨</Text>
+    <ImageBackground
+      source={require('../assets/backgrounds/kundli.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.heading}>✨ Your Astrology Chart ✨</Text>
 
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.languageButton, language === 'en' && styles.languageSelected]}
-          onPress={() => setLanguage('en')}
-        >
-          <Text style={styles.languageText}>🇬🇧 English</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.languageButton, language === 'hi' && styles.languageSelected]}
-          onPress={() => setLanguage('hi')}
-        >
-          <Text style={styles.languageText}>🇮🇳 हिंदी</Text>
-        </TouchableOpacity>
-      </View>
-
-      {loadingChart ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading chart data...</Text>
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[styles.languageButton, language === 'en' && styles.languageSelected]}
+            onPress={() => setLanguage('en')}
+          >
+            <Text style={styles.languageText}>🇬🇧 English</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.languageButton, language === 'hi' && styles.languageSelected]}
+            onPress={() => setLanguage('hi')}
+          >
+            <Text style={styles.languageText}>🇮🇳 हिंदी</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🌟 Nakshatra Details</Text>
-            <Text style={styles.cardText}>Name: {nakshatra?.name}</Text>
-            <Text style={styles.cardText}>Pada: {nakshatra?.pada}</Text>
-            <Text style={styles.cardText}>Rashi: {chandra_rasi?.name}</Text>
-          </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🔮 Rashi</Text>
-            <Text style={styles.cardText}>Moon Sign: {chandra_rasi?.name}</Text>
-            <Text style={styles.cardText}>Sun Sign: {soorya_rasi?.name}</Text>
+        {loadingChart ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>Loading chart data...</Text>
           </View>
+        ) : (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>🌟 Nakshatra Details</Text>
+              <Text style={styles.cardText}>Name: {nakshatra?.name}</Text>
+              <Text style={styles.cardText}>Pada: {nakshatra?.pada}</Text>
+              <Text style={styles.cardText}>Rashi: {chandra_rasi?.name}</Text>
+            </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>✨ Additional Info</Text>
-            <Text style={styles.cardText}>Deity: {additional_info?.deity}</Text>
-            <Text style={styles.cardText}>Animal: {additional_info?.animal_sign}</Text>
-            <Text style={styles.cardText}>Color: {additional_info?.color}</Text>
-            <Text style={styles.cardText}>Syllables: {additional_info?.syllables}</Text>
-          </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>🔮 Rashi</Text>
+              <Text style={styles.cardText}>Moon Sign: {chandra_rasi?.name}</Text>
+              <Text style={styles.cardText}>Sun Sign: {soorya_rasi?.name}</Text>
+            </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🧠 AI Explanation ({language === 'hi' ? 'हिंदी' : 'English'})</Text>
-            {loadingAI ? (
-              <ActivityIndicator size="small" color={COLORS.primary} />
-            ) : (
-              <Text style={styles.cardText}>{explanation}</Text>
-            )}
-          </View>
-        </>
-      )}
-    </ScrollView>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>✨ Additional Info</Text>
+              <Text style={styles.cardText}>Deity: {additional_info?.deity}</Text>
+              <Text style={styles.cardText}>Animal: {additional_info?.animal_sign}</Text>
+              <Text style={styles.cardText}>Color: {additional_info?.color}</Text>
+              <Text style={styles.cardText}>Syllables: {additional_info?.syllables}</Text>
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>🧠 AI Explanation ({language === 'hi' ? 'हिंदी' : 'English'})</Text>
+              {loadingAI ? (
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              ) : (
+                <Text style={styles.cardText}>{explanation}</Text>
+              )}
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: COLORS.background,
+  },
+  container: {
+    flexGrow: 1,
     padding: 20,
   },
   heading: {
@@ -212,6 +221,7 @@ const styles = StyleSheet.create({
 });
 
 export default ChartScreen;
+
 
 
 

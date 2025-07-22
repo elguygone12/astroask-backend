@@ -1,5 +1,3 @@
-// ✅ FRONTEND: Upgraded DashaScreen.js with language toggle and better UI
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -9,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
 import COLORS from '../constants/colors';
 
@@ -64,47 +63,58 @@ const DashaScreen = ({ route }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.heading}>🔮 {language === 'hi' ? 'विंशोत्तरी दशा विश्लेषण' : 'Vimshottari Dasha Analysis'}</Text>
+    <ImageBackground
+      source={require('../assets/backgrounds/kundli.png')} // Make sure image exists
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.heading}>
+          🔮 {language === 'hi' ? 'विंशोत्तरी दशा विश्लेषण' : 'Vimshottari Dasha Analysis'}
+        </Text>
 
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.languageButton, language === 'en' && styles.languageSelected]}
-          onPress={() => setLanguage('en')}
-        >
-          <Text style={styles.languageText}>🇬🇧 English</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.languageButton, language === 'hi' && styles.languageSelected]}
-          onPress={() => setLanguage('hi')}
-        >
-          <Text style={styles.languageText}>🇮🇳 हिंदी</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[styles.languageButton, language === 'en' && styles.languageSelected]}
+            onPress={() => setLanguage('en')}
+          >
+            <Text style={styles.languageText}>🇬🇧 English</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.languageButton, language === 'hi' && styles.languageSelected]}
+            onPress={() => setLanguage('hi')}
+          >
+            <Text style={styles.languageText}>🇮🇳 हिंदी</Text>
+          </TouchableOpacity>
+        </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>
-            {language === 'hi'
-              ? 'दशा विवरण ला रहा है...'
-              : 'Generating Dasha Explanation...'}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🧠 {language === 'hi' ? 'AI विवरण' : 'AI Insight'}</Text>
-          <Text style={styles.cardText}>{explanation}</Text>
-        </View>
-      )}
-    </ScrollView>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>
+              {language === 'hi'
+                ? 'दशा विवरण ला रहा है...'
+                : 'Generating Dasha Explanation...'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              🧠 {language === 'hi' ? 'AI विवरण' : 'AI Insight'}
+            </Text>
+            <Text style={styles.cardText}>{explanation}</Text>
+          </View>
+        )}
+      </ScrollView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: COLORS.background,
+  },
+  container: {
     padding: 20,
   },
   heading: {
@@ -168,6 +178,7 @@ const styles = StyleSheet.create({
 });
 
 export default DashaScreen;
+
 
 
 
