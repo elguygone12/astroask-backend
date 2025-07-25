@@ -1,29 +1,67 @@
 {
   "expo": {
-    "name": "astrology-app-clean",
-    "slug": "astrology-app-clean",
+    "name": "AstroAsk",
+    "slug": "astroask",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0016"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0A0016"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.advik7015.astroask",
+
+      "permissions": [
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_MEDIA_DOCUMENTS",
+        "SYSTEM_ALERT_WINDOW",
+        "VIBRATE"
+      ],
+
+      "softwareKeyboardLayoutMode": "pan",
+
+      "config": {
+        "requestLegacyExternalStorage": true
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "58bbb5d3-8b02-41e9-b8ed-a69fe9a8bdd2"
+      }
+    },
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-html-to-pdf",
+          "cors",
+          "dotenv",
+          "express",
+          "node-fetch",
+          "striptags"
+        ]
+      }
     }
   }
 }
+
+

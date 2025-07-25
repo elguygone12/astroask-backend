@@ -132,7 +132,7 @@ ${JSON.stringify(data, null, 2)}`;
 
 जन्म डेटा:
 ${JSON.stringify(data, null, 2)}`
-      : `You are a highly experienced Vedic astrologer. Based on the following birth data, provide a comprehensive, detailed analysis of the Vimshottari Dasha system. Divide the explanation into sections with headings like "Career", "Health", "Wealth", "Relationships", and use HTML-like tags such as <health>, <career>, etc. The explanation must be professional and not include coordinates, timezone, or Delhi. Write in paragraph format.
+      : `You are a highly experienced Vedic astrologer. Based on the following birth data, provide a comprehensive, detailed analysis of the Vimshottari Dasha system. Divide the explanation into sections with headings like "Career", "Health", "Wealth", "Relationships", and use HTML-like tags such as <health>, <career>, etc. The explanation must be professional and Do NOT include coordinates, timezone, or mention Delhi in any way. Write in paragraph format.
 
 Birth chart data:
 ${JSON.stringify(data, null, 2)}`;

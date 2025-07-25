@@ -37,3 +37,5 @@ yarn-error.*
 *.tsbuildinfo
 prokerala-backend/node_modules
 
+/android
+/ios

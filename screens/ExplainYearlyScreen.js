@@ -10,6 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import COLORS from '../constants/colors';
+import striptags from 'striptags';
 
 const ExplainYearlyScreen = ({ route }) => {
   const {
@@ -116,7 +117,7 @@ const ExplainYearlyScreen = ({ route }) => {
             <Text style={styles.cardTitle}>
               {language === 'hi' ? '🔮 भविष्यवाणी विवरण' : '🔮 Forecast Details'}
             </Text>
-            <Text style={styles.cardText}>{explanation}</Text>
+            <Text style={styles.cardText}>{striptags(explanation)}</Text>
           </View>
         )}
       </ScrollView>
@@ -192,6 +193,11 @@ const styles = StyleSheet.create({
 });
 
 export default ExplainYearlyScreen;
+
+
+
+
+
 
 
 

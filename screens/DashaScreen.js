@@ -10,6 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import COLORS from '../constants/colors';
+import striptags from 'striptags';
 
 const DashaScreen = ({ route }) => {
   const {
@@ -64,7 +65,7 @@ const DashaScreen = ({ route }) => {
 
   return (
     <ImageBackground
-      source={require('../assets/backgrounds/kundli.png')} // Make sure image exists
+      source={require('../assets/backgrounds/kundli.png')}
       style={styles.background}
       resizeMode="cover"
     >
@@ -102,7 +103,7 @@ const DashaScreen = ({ route }) => {
             <Text style={styles.cardTitle}>
               🧠 {language === 'hi' ? 'AI विवरण' : 'AI Insight'}
             </Text>
-            <Text style={styles.cardText}>{explanation}</Text>
+            <Text style={styles.cardText}>{striptags(explanation)}</Text>
           </View>
         )}
       </ScrollView>
@@ -111,12 +112,8 @@ const DashaScreen = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-  },
-  container: {
-    padding: 20,
-  },
+  background: { flex: 1 },
+  container: { padding: 20 },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -178,6 +175,12 @@ const styles = StyleSheet.create({
 });
 
 export default DashaScreen;
+
+
+
+
+
+
 
 
 

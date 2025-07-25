@@ -38,8 +38,6 @@ const ChartScreen = ({ route }) => {
       });
 
       const text = await response.text();
-      console.log('📦 Raw backend response:', text);
-
       let json;
       try {
         json = JSON.parse(text);
@@ -57,7 +55,6 @@ const ChartScreen = ({ route }) => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to load chart data.');
-      console.error('❌ Chart fetch error:', error);
     } finally {
       setLoadingChart(false);
     }
@@ -73,10 +70,8 @@ const ChartScreen = ({ route }) => {
       });
 
       const json = await res.json();
-      console.log('🌐 AI response:', json);
       setExplanation(json.explanation || 'No explanation received.');
     } catch (err) {
-      console.error('❌ Chart GPT error:', err);
       setExplanation('Failed to load explanation.');
     } finally {
       setLoadingAI(false);
@@ -153,13 +148,8 @@ const ChartScreen = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-  },
-  container: {
-    flexGrow: 1,
-    padding: 20,
-  },
+  background: { flex: 1 },
+  container: { flexGrow: 1, padding: 20 },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -221,6 +211,10 @@ const styles = StyleSheet.create({
 });
 
 export default ChartScreen;
+
+
+
+
 
 
 
